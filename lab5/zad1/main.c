@@ -9,6 +9,37 @@
 
 #include "helpers.h" // popFragment, trimWhite
 
+void createProc(char* procStr){
+  char* orig = procStr;
+
+  char* procStrCp = concat("", procStr);
+  char* procStrCpOrig = procStrCp;
+  int argc = 0;
+  char* word = popFragment(&procStrCp, ' ');
+  while(word != NULL){
+    argc++;
+    word = popFragment(&procStrCp, ' ');
+  }
+  free(procStrCpOrig);
+
+  char* argv[argc + 1];
+  argv[argc] = NULL;
+  int j = 0;
+
+  word = popFragment(&procStr, ' ');
+  while(word != NULL){
+    argv[j++] = word;
+    word = popFragment(&procStr, ' ');
+  }
+
+  for(int i=0; i<argc; i++){
+    printf("%s\n", argv[i]);
+  }
+  printf("------------------------------------\n");
+
+  free(orig);
+}
+
 int main(){
   printf("Enter your commands separated by '|' symbol\n");
   while(1){
@@ -27,10 +58,7 @@ int main(){
     int i = 1;
     while(procStr != NULL){
       procStr = trimWhite(procStr);
-      //createProc(procStr);
-      //free(procStr);
-      printf("\n%d: %s", i, procStr);
-      free(procStr);
+      createProc(procStr);
       procStr = popFragment(&procList, '|');
       i++;
     }
