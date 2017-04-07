@@ -1,4 +1,3 @@
 /* created by Filip Raszla */
 
-Wszystkie zadania z sysopów
-Aktualizowane w miare na bieżąco
+Wszystkie zadania z sysopów, aktualizowane w miare na bieżąco
