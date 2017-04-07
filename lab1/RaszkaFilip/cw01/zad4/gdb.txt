@@ -1,0 +1,21 @@
+Zmodyfikowany plik main.c, makefile oraz plik core znajdują się w tym foldzerze
+
+Modyfikacja:
+Linia 139: printf("Its going to crush %s", findInTree(tBook, nameCompare, "FD")->contact->surname);
+Próbuję znaleźć kontakt w opróżnionej książcę adresowej, a następnie nie sprawdzając, czy funkcja służnie zwróci
+NULLa, próbuję odnieść się do pola tego noda.
+
+Debuggowanie:
+Najpierw zwiększyłem maksymalną możliwą pamięć pliku core: ulimit -c unlimited
+Następnie dodałem do makefile opcję -g
+GDB uruchomiłem za pomocą: gdb -c core.PID ./program
+pierwsza komenda, której spróbowałem, była "run". Program wykonywał się aż do napotkania linii 139, przy której
+GDB poinformowało mnie o błędzie:
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0000000000401306 in main () at main.c:139
+139	    printf("Its going to crush %s", findInTree(tBook, nameCompare, "FD")->contact->surname);
+
+Spróbowałem też opcji bt - zwraca ona stack trace z momentu, w którym występuje bug. Ta opcja również wskazała
+mi błąd w linijce 139:
+#0  0x0000000000401306 in main () at main.c:139

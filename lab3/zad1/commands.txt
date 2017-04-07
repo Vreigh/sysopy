@@ -1,0 +1,8 @@
+#zmienna1 wartosc1
+#zmienna2 wartosc2
+ls -l
+./hello.out
+./test.out zmienna1
+#zmienna2
+./test.out zmienna2
+echo "Hello World!"

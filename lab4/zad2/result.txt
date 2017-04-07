@@ -1,0 +1,40 @@
+Received SIGUSR1 from PID 7511!
+Received SIGUSR1 from PID 7510!
+Received SIGUSR1 from PID 7512!
+Received SIGUSR1 from PID 7513!
+Received SIGUSR1 from PID 7514!
+Hello World, Im 7511, and im going to sleep...
+Hello Again! Im 7511, and i just awoke!
+My parent noticed me, 7511, im so excited!!
+Received real time signal: SIGMIN+5 from pid: 7511
+Hello World, Im 7510, and im going to sleep...
+Hello Again! Im 7510, and i just awoke!
+My parent noticed me, 7510, im so excited!!
+Received real time signal: SIGMIN+5 from pid: 7510
+Received real time signal: SIGMIN+5 from pid: 7512
+Hello World, Im 7512, and im going to sleep...
+Hello Again! Im 7512, and i just awoke!
+My parent noticed me, 7512, im so excited!!
+Received real time signal: SIGMIN+5 from pid: 7513
+Hello World, Im 7513, and im going to sleep...
+Hello Again! Im 7513, and i just awoke!
+My parent noticed me, 7513, im so excited!!
+Received real time signal: SIGMIN+5 from pid: 7514
+Received SIGUSR1 from PID 7519!
+Received real time signal: SIGMIN+5 from pid: 7519
+Hello World, Im 7519, and im going to sleep...
+Hello Again! Im 7519, and i just awoke!
+My parent noticed me, 7519, im so excited!!
+Received SIGUSR1 from PID 7516!
+Received real time signal: SIGMIN+5 from pid: 7516
+Received SIGUSR1 from PID 7517!
+Received real time signal: SIGMIN+5 from pid: 7517
+Received SIGUSR1 from PID 7515!
+Received real time signal: SIGMIN+5 from pid: 7515
+Received SIGUSR1 from PID 7518!
+Received real time signal: SIGMIN+5 from pid: 7518
+Hello World, Im 7518, and im going to sleep...
+Hello Again! Im 7518, and i just awoke!
+My parent noticed me, 7518, im so excited!!
+Child Process 0 has terminated, with exit status of: 326606840!
+Child Process 0 has terminated, with exit status of: 326606840!

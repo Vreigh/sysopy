@@ -1,0 +1,696 @@
+Optymalizacja na poziomie:  -O2
+
+
+STATIC STATIC STATIC STATIC STATIC STATIC STATIC
+
+-------------------------------LIST------------------------------------
+ 
+-------------------------------LIST------------------------------------
+ 
+Creating 10000-element list Book: 
+
+ Time of operation:	Real: 0.021662	User: 0.020000	System: 0.000000 
+ 
+Adding two contacts to the full list 
+ 
+ Time of operation:	Real: 0.000001	User: 0.000000	System: 0.000000 
+ 
+Sorting list by names: 
+
+ Time of operation:	Real: 0.005197	User: 0.000000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000003	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000361	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000001	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000381	User: 0.000000	System: 0.000000 
+ 
+Deleting entire list: 
+
+ Time of operation:	Real: 0.004072	User: 0.010000	System: 0.000000 
+ 
+-------------------------------TREE------------------------------------
+ 
+-------------------------------TREE------------------------------------
+ 
+Creating 10000-element tree Book: 
+
+ Time of operation:	Real: 0.033737	User: 0.030000	System: 0.000000 
+ 
+Adding two contacts to the full tree: 
+
+ Time of operation:	Real: 0.000002	User: 0.000000	System: 0.000000 
+ 
+Rebuilding the tree by names: 
+
+ Time of operation:	Real: 0.008221	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000001	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000654	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000002	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000625	User: 0.000000	System: 0.000000 
+ 
+Deleting entire tree: 
+
+ Time of operation:	Real: 0.004845	User: 0.010000	System: 0.000000 
+ 
+
+ 
+SHARED SHARED SHARED SHARED SHARED SHARED SHARED SHARED
+
+-------------------------------LIST------------------------------------
+ 
+-------------------------------LIST------------------------------------
+ 
+Creating 10000-element list Book: 
+
+ Time of operation:	Real: 0.019832	User: 0.010000	System: 0.000000 
+ 
+Adding two contacts to the full list 
+ 
+ Time of operation:	Real: 0.000002	User: 0.000000	System: 0.000000 
+ 
+Sorting list by names: 
+
+ Time of operation:	Real: 0.005041	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000005	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000464	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000003	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000320	User: 0.000000	System: 0.000000 
+ 
+Deleting entire list: 
+
+ Time of operation:	Real: 0.003994	User: 0.000000	System: 0.000000 
+ 
+-------------------------------TREE------------------------------------
+ 
+-------------------------------TREE------------------------------------
+ 
+Creating 10000-element tree Book: 
+
+ Time of operation:	Real: 0.032223	User: 0.030000	System: 0.000000 
+ 
+Adding two contacts to the full tree: 
+
+ Time of operation:	Real: 0.000003	User: 0.000000	System: 0.000000 
+ 
+Rebuilding the tree by names: 
+
+ Time of operation:	Real: 0.008032	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000003	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000644	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000003	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000632	User: 0.000000	System: 0.000000 
+ 
+Deleting entire tree: 
+
+ Time of operation:	Real: 0.004977	User: 0.010000	System: 0.000000 
+ 
+
+ 
+DYNAMIC DYNAMIC DYNAMIC DYNAMIC DYNAMIC DYNAMIC DYNAMIC
+
+-------------------------------LIST------------------------------------
+ 
+-------------------------------LIST------------------------------------
+ 
+Creating 10000-element list Book: 
+
+ Time of operation:	Real: 0.019542	User: 0.010000	System: 0.000000 
+ 
+Adding two contacts to the full list 
+ 
+ Time of operation:	Real: 0.000001	User: 0.000000	System: 0.000000 
+ 
+Sorting list by names: 
+
+ Time of operation:	Real: 0.004922	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000003	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000372	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000003	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000403	User: 0.000000	System: 0.000000 
+ 
+Deleting entire list: 
+
+ Time of operation:	Real: 0.004100	User: 0.000000	System: 0.000000 
+ 
+-------------------------------TREE------------------------------------
+ 
+-------------------------------TREE------------------------------------
+ 
+Creating 10000-element tree Book: 
+
+ Time of operation:	Real: 0.031435	User: 0.030000	System: 0.000000 
+ 
+Adding two contacts to the full tree: 
+
+ Time of operation:	Real: 0.000003	User: 0.000000	System: 0.000000 
+ 
+Rebuilding the tree by names: 
+
+ Time of operation:	Real: 0.007943	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000001	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000598	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000011	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000606	User: 0.000000	System: 0.000000 
+ 
+Deleting entire tree: 
+
+ Time of operation:	Real: 0.004775	User: 0.000000	System: 0.000000 
+ 
+
+ 
+Optymalizacja na poziomie:  -O1
+
+
+STATIC STATIC STATIC STATIC STATIC STATIC STATIC
+
+-------------------------------LIST------------------------------------
+ 
+-------------------------------LIST------------------------------------
+ 
+Creating 10000-element list Book: 
+
+ Time of operation:	Real: 0.020957	User: 0.010000	System: 0.000000 
+ 
+Adding two contacts to the full list 
+ 
+ Time of operation:	Real: 0.000002	User: 0.000000	System: 0.000000 
+ 
+Sorting list by names: 
+
+ Time of operation:	Real: 0.004803	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000003	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000395	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000001	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000395	User: 0.000000	System: 0.000000 
+ 
+Deleting entire list: 
+
+ Time of operation:	Real: 0.004127	User: 0.000000	System: 0.000000 
+ 
+-------------------------------TREE------------------------------------
+ 
+-------------------------------TREE------------------------------------
+ 
+Creating 10000-element tree Book: 
+
+ Time of operation:	Real: 0.031436	User: 0.030000	System: 0.000000 
+ 
+Adding two contacts to the full tree: 
+
+ Time of operation:	Real: 0.000004	User: 0.000000	System: 0.000000 
+ 
+Rebuilding the tree by names: 
+
+ Time of operation:	Real: 0.007956	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000001	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000570	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000002	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000582	User: 0.000000	System: 0.000000 
+ 
+Deleting entire tree: 
+
+ Time of operation:	Real: 0.004891	User: 0.010000	System: 0.000000 
+ 
+
+ 
+SHARED SHARED SHARED SHARED SHARED SHARED SHARED SHARED
+
+-------------------------------LIST------------------------------------
+ 
+-------------------------------LIST------------------------------------
+ 
+Creating 10000-element list Book: 
+
+ Time of operation:	Real: 0.019554	User: 0.010000	System: 0.000000 
+ 
+Adding two contacts to the full list 
+ 
+ Time of operation:	Real: 0.000002	User: 0.000000	System: 0.000000 
+ 
+Sorting list by names: 
+
+ Time of operation:	Real: 0.004934	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000005	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000524	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000002	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000485	User: 0.000000	System: 0.000000 
+ 
+Deleting entire list: 
+
+ Time of operation:	Real: 0.003920	User: 0.000000	System: 0.000000 
+ 
+-------------------------------TREE------------------------------------
+ 
+-------------------------------TREE------------------------------------
+ 
+Creating 10000-element tree Book: 
+
+ Time of operation:	Real: 0.033233	User: 0.030000	System: 0.000000 
+ 
+Adding two contacts to the full tree: 
+
+ Time of operation:	Real: 0.000004	User: 0.000000	System: 0.000000 
+ 
+Rebuilding the tree by names: 
+
+ Time of operation:	Real: 0.008159	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000004	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000626	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000004	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000603	User: 0.000000	System: 0.000000 
+ 
+Deleting entire tree: 
+
+ Time of operation:	Real: 0.004675	User: 0.000000	System: 0.000000 
+ 
+
+ 
+DYNAMIC DYNAMIC DYNAMIC DYNAMIC DYNAMIC DYNAMIC DYNAMIC
+
+-------------------------------LIST------------------------------------
+ 
+-------------------------------LIST------------------------------------
+ 
+Creating 10000-element list Book: 
+
+ Time of operation:	Real: 0.019546	User: 0.010000	System: 0.000000 
+ 
+Adding two contacts to the full list 
+ 
+ Time of operation:	Real: 0.000001	User: 0.000000	System: 0.000000 
+ 
+Sorting list by names: 
+
+ Time of operation:	Real: 0.004871	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000003	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000259	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000002	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000348	User: 0.000000	System: 0.000000 
+ 
+Deleting entire list: 
+
+ Time of operation:	Real: 0.004070	User: 0.000000	System: 0.000000 
+ 
+-------------------------------TREE------------------------------------
+ 
+-------------------------------TREE------------------------------------
+ 
+Creating 10000-element tree Book: 
+
+ Time of operation:	Real: 0.032216	User: 0.030000	System: 0.000000 
+ 
+Adding two contacts to the full tree: 
+
+ Time of operation:	Real: 0.000002	User: 0.000000	System: 0.000000 
+ 
+Rebuilding the tree by names: 
+
+ Time of operation:	Real: 0.007928	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000002	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000607	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000004	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000609	User: 0.000000	System: 0.000000 
+ 
+Deleting entire tree: 
+
+ Time of operation:	Real: 0.004698	User: 0.000000	System: 0.000000 
+ 
+
+ 
+Optymalizacja na poziomie:  -O0
+
+
+STATIC STATIC STATIC STATIC STATIC STATIC STATIC
+
+-------------------------------LIST------------------------------------
+ 
+-------------------------------LIST------------------------------------
+ 
+Creating 10000-element list Book: 
+
+ Time of operation:	Real: 0.023785	User: 0.010000	System: 0.000000 
+ 
+Adding two contacts to the full list 
+ 
+ Time of operation:	Real: 0.000002	User: 0.000000	System: 0.000000 
+ 
+Sorting list by names: 
+
+ Time of operation:	Real: 0.006422	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000004	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000530	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000001	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000530	User: 0.000000	System: 0.000000 
+ 
+Deleting entire list: 
+
+ Time of operation:	Real: 0.004352	User: 0.000000	System: 0.000000 
+ 
+-------------------------------TREE------------------------------------
+ 
+-------------------------------TREE------------------------------------
+ 
+Creating 10000-element tree Book: 
+
+ Time of operation:	Real: 0.033166	User: 0.030000	System: 0.010000 
+ 
+Adding two contacts to the full tree: 
+
+ Time of operation:	Real: 0.000003	User: 0.000000	System: 0.000000 
+ 
+Rebuilding the tree by names: 
+
+ Time of operation:	Real: 0.008022	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000007	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000618	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000001	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000619	User: 0.000000	System: 0.000000 
+ 
+Deleting entire tree: 
+
+ Time of operation:	Real: 0.004759	User: 0.000000	System: 0.000000 
+ 
+
+ 
+SHARED SHARED SHARED SHARED SHARED SHARED SHARED SHARED
+
+-------------------------------LIST------------------------------------
+ 
+-------------------------------LIST------------------------------------
+ 
+Creating 10000-element list Book: 
+
+ Time of operation:	Real: 0.019696	User: 0.010000	System: 0.000000 
+ 
+Adding two contacts to the full list 
+ 
+ Time of operation:	Real: 0.000001	User: 0.000000	System: 0.000000 
+ 
+Sorting list by names: 
+
+ Time of operation:	Real: 0.004939	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000005	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000245	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000002	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000247	User: 0.000000	System: 0.000000 
+ 
+Deleting entire list: 
+
+ Time of operation:	Real: 0.003806	User: 0.000000	System: 0.000000 
+ 
+-------------------------------TREE------------------------------------
+ 
+-------------------------------TREE------------------------------------
+ 
+Creating 10000-element tree Book: 
+
+ Time of operation:	Real: 0.032072	User: 0.030000	System: 0.000000 
+ 
+Adding two contacts to the full tree: 
+
+ Time of operation:	Real: 0.000003	User: 0.000000	System: 0.000000 
+ 
+Rebuilding the tree by names: 
+
+ Time of operation:	Real: 0.009217	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000008	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000799	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000003	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000649	User: 0.000000	System: 0.000000 
+ 
+Deleting entire tree: 
+
+ Time of operation:	Real: 0.004838	User: 0.000000	System: 0.000000 
+ 
+
+ 
+DYNAMIC DYNAMIC DYNAMIC DYNAMIC DYNAMIC DYNAMIC DYNAMIC
+
+-------------------------------LIST------------------------------------
+ 
+-------------------------------LIST------------------------------------
+ 
+Creating 10000-element list Book: 
+
+ Time of operation:	Real: 0.019718	User: 0.010000	System: 0.000000 
+ 
+Adding two contacts to the full list 
+ 
+ Time of operation:	Real: 0.000002	User: 0.000000	System: 0.000000 
+ 
+Sorting list by names: 
+
+ Time of operation:	Real: 0.005345	User: 0.000000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000003	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000310	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000003	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000263	User: 0.000000	System: 0.000000 
+ 
+Deleting entire list: 
+
+ Time of operation:	Real: 0.003830	User: 0.010000	System: 0.000000 
+ 
+-------------------------------TREE------------------------------------
+ 
+-------------------------------TREE------------------------------------
+ 
+Creating 10000-element tree Book: 
+
+ Time of operation:	Real: 0.032346	User: 0.030000	System: 0.000000 
+ 
+Adding two contacts to the full tree: 
+
+ Time of operation:	Real: 0.000002	User: 0.000000	System: 0.000000 
+ 
+Rebuilding the tree by names: 
+
+ Time of operation:	Real: 0.008672	User: 0.010000	System: 0.000000 
+ 
+Optimistic search: 
+
+ Time of operation:	Real: 0.000001	User: 0.000000	System: 0.000000 
+ 
+Pesimistic search: 
+
+ Time of operation:	Real: 0.000829	User: 0.000000	System: 0.000000 
+ 
+Optimistic delete: 
+
+ Time of operation:	Real: 0.000004	User: 0.000000	System: 0.000000 
+ 
+Pesimistic delete: 
+
+ Time of operation:	Real: 0.000706	User: 0.000000	System: 0.000000 
+ 
+Deleting entire tree: 
+
+ Time of operation:	Real: 0.004760	User: 0.000000	System: 0.000000 
+
+
+Dla mojego programu nie ma wyraźnych różnic szybkości na kolejnych poziomach optymalizacji. Przyczyną może być
+między innymi losowość danych. Widać natomiast, że optymistyczne i pesymistyczne czasy bardzo się różnią. Zauważyłem też,
+że nawet mimo zwiększenia ilości danych dziesięciokrotnie, czas systemowy jest zbliżony do zera. To czas rzeczywisty w tym
+przypadku niesie najwięcej informacji. 
