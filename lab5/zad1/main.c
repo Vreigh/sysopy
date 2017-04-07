@@ -10,7 +10,7 @@
 #include "helpers.h" // popFragment, trimWhite
 
 void createProc(char* procStr){
-  char* orig = procStr;
+  char* orig = procStr; // popFragment zmienia argument, wiec zapamietuje wskaznik, aby potem uwolnic caly obszar
 
   char* procStrCp = concat("", procStr);
   char* procStrCpOrig = procStrCp;
@@ -24,8 +24,8 @@ void createProc(char* procStr){
 
   char* argv[argc + 1];
   argv[argc] = NULL;
-  int j = 0;
 
+  int j = 0;
   word = popFragment(&procStr, ' ');
   while(word != NULL){
     argv[j++] = word;
@@ -55,12 +55,10 @@ int main(){
     char* orig = procList;
 
     char* procStr = popFragment(&procList, '|');
-    int i = 1;
     while(procStr != NULL){
       procStr = trimWhite(procStr);
       createProc(procStr);
       procStr = popFragment(&procList, '|');
-      i++;
     }
     free(orig);
     printf("\nNext commands: ");
