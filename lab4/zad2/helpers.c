@@ -5,7 +5,7 @@
 
 char* concat(const char* one, const char* two){
     char* new = malloc(sizeof(char) * (strlen(one) + strlen(two) + 1) );
-    if(strcmp(one, "") != 0) strcpy(new, one);
+    strcpy(new, one);
     strcat(new, two);
     return new;
 }
