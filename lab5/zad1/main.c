@@ -19,19 +19,23 @@ int main(){
       printf("Wrong command line!\n");
       continue;
     }
-    if(procList[n - 1] == '\n') procList[n - 1] = 0; // usun znak konca linii
+    if(procList[n - 1] == '\n') procList[--n] = 0; // usun znak konca linii
+    procList = realloc(procList, sizeof(char) * n + 1);
+    char* orig = procList;
 
     char* procStr = popFragment(&procList, '|');
     int i = 1;
     while(procStr != NULL){
-      //procStr = trimWhite(procStr);
+      procStr = trimWhite(procStr);
       //createProc(procStr);
       //free(procStr);
       printf("\n%d: %s", i, procStr);
+      free(procStr);
       procStr = popFragment(&procList, '|');
       i++;
     }
-    printf("\nNext line: ");
+    free(orig);
+    printf("\nNext commands: ");
   }
   return 0;
 }

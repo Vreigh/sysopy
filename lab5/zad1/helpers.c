@@ -18,7 +18,7 @@ char* concat3(const char *s1, const char *s2, const char* s3){
 }
 
 char* popFragment(char** origStr, char delim){
-  if(*origStr == NULL) return NULL; // zwracam NULL jesli nie ma juz z czego popowac
+  if(*origStr == NULL) return NULL; // zwraca NULL jesli nie ma juz z czego popowac
 
   char* i = *origStr;
   while(*i != delim){
@@ -31,9 +31,7 @@ char* popFragment(char** origStr, char delim){
   }
 
   if(i == *origStr){
-    char* tmp = concat("", i + 1);
-    free(*origStr);
-    *origStr = tmp;
+    *origStr = i + 1;
 
     char* ret = malloc(sizeof(char));
     *ret = 0;
@@ -41,15 +39,31 @@ char* popFragment(char** origStr, char delim){
   }
 
   *i = 0;
-  char* ret = concat("", *origStr);
+  char* ret = *origStr;
   if(i[1] != 0){
-    char* tmp = concat("", i + 1);
-    free(*origStr);
-    *origStr = tmp;
+    *origStr = i + 1;
   }else{
-    free(*origStr);
     *origStr = NULL;
   }
-
   return ret;
+}
+
+char* trimWhite(char* origStr){
+  char* buffer = malloc(sizeof(char) * 200);
+  char* i = origStr;
+  while(*i == ' ') i++;
+  int j = 0;
+  while(*i != 0){
+    while((*i != ' ') && (*i != 0)){
+      buffer[j++] = *i;
+      i++;
+    }
+    if(*i == ' '){
+      buffer[j++] = ' ';
+      while(*i == ' ') i++;
+    }
+  }
+  buffer[j++] = 0;
+  buffer = realloc(buffer, j);
+  return buffer;
 }
