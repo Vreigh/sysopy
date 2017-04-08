@@ -16,7 +16,15 @@ char* concat3(const char *s1, const char *s2, const char* s3){
   strcat(new, s3);
   return new;
 }
-
+/*
+  Funkcja popFragment wyjmuje fragment do chara delim z *origStr, zwracajac wskazanie na ten fragment
+  funkcja zmienia wskaznik podany jako argument, tak aby wskazywal na kolejna czesc lub NULL
+  funkcja nie alokuje nowej pamieci (poza przypadkiem, gdy delim jest na pocz stringa, wtedy zwraca nowy pusty string)
+  popFragment nie przesuwa slow w pamieci, znajduja sie w tym samym obszarze - warto przed forem skopiowac wskaznik, jesli
+  chce sie potem zwolnic caly ten obszar
+  gdy nic nie zostaje z *origStr, *origStr ustawia sie na NULL
+  wywolane na NULL zwraca NULL
+*/
 char* popFragment(char** origStr, char delim){
   if(*origStr == NULL) return NULL; // zwraca NULL jesli nie ma juz z czego popowac
 
@@ -48,7 +56,7 @@ char* popFragment(char** origStr, char delim){
   return ret;
 }
 
-char* trimWhite(char* origStr){
+char* trimWhite(char* origStr){ // dziala podobnie do zadania z assemblerow, ale odpuscilem taby
   char* buffer = malloc(sizeof(char) * 200);
   char* i = origStr;
   while(*i == ' ') i++;
@@ -64,6 +72,6 @@ char* trimWhite(char* origStr){
     }
   }
   buffer[j++] = 0;
-  buffer = realloc(buffer, j);
+  buffer = realloc(buffer, j); // bezcenny ram
   return buffer;
 }

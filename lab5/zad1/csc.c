@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <string.h>
-
+// przykladowy program przekierowujacy
 int main(int argc, char** argv){
   char buffer[1000];
 

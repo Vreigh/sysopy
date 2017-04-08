@@ -46,8 +46,8 @@ int main(){
     procList = realloc(procList, sizeof(char) * n + 1);
 
 
-    int evenPipe[2];
-    int oddPipe[2];
+    int evenPipe[2]; //parzyste dziecko pisze do parzystego pipe, czyta z nieparzystego
+    int oddPipe[2]; // nieparzyste dziecko pisze do nieparzystego pipe, czyta z parzystego
     int k = 0;
 
     char* orig = procList;
@@ -57,14 +57,14 @@ int main(){
 
       if(k%2 == 0){
         if(k != 0){
-          close(evenPipe[0]); close(evenPipe[1]);
+          close(evenPipe[0]); close(evenPipe[1]); // nowe parzyste dziecko nie potrzebuje juz starego parzystego pipe
         }
         if(pipe(evenPipe) == -1){
           printf("Couldnt pipe at number %d!\n", k);
         }
       }else{
         if(k != 1){
-          close(oddPipe[0]); close(oddPipe[1]);
+          close(oddPipe[0]); close(oddPipe[1]); // analogicznie
         }
         if(pipe(oddPipe) == -1){
           printf("Couldnt pipe at number %d!\n", k);
@@ -73,20 +73,20 @@ int main(){
 
       pid_t cp = fork();
       if(cp == -1){
-        printf("Couldnt fork child process %d!\n", k);
+        printf("Couldnt fork child process %d!\n", k); // pisze wszedzie errory, zeby potem nie bylo segmentation fault i nara
         return 1;
       }else if(cp == 0){
         //// ustawianie pipow
         if(k%2 == 0){
           if(procList != NULL){
             close(evenPipe[0]);
-            if(dup2(evenPipe[1], 1) < 0){
+            if(dup2(evenPipe[1], 1) < 0){ // od teraz pisanie na standardowe wyjscie jest rownoznaczne z pisaniem na wyjscie pipe
               printf("Couldnt set writing at number %d!\n", k); return 3;
             }
           }
           if(k != 0){
             close(oddPipe[1]);
-            if(dup2(oddPipe[0], 0) < 0){
+            if(dup2(oddPipe[0], 0) < 0){ // analogicznie co wyzej
               printf("Couldnt set reading at number %d!\n", k);return 3;
             }
           }
@@ -114,8 +114,8 @@ int main(){
     free(orig);
 
     while(1){
-      wait(NULL);
-      if (errno == ECHILD){
+      wait(NULL); // czekaj na dzieci
+      if (errno == ECHILD){ // nie ma dzieci? koniec.
           printf("\nWhole line has been executed!\n");
           break;
       }
