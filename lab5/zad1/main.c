@@ -120,7 +120,6 @@ int main(){
           break;
       }
     }
-    usleep(10000); // zeby w razie errorow napis "next commands" i tak pojawial sie na koncu
     printf("\nNext commands: ");
   }
   return 0;
