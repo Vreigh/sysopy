@@ -80,26 +80,26 @@ int main(){
         if(k%2 == 0){
           if(procList != NULL){
             close(evenPipe[0]);
-            if(dup2(1, evenPipe[1]) < 0){
+            if(dup2(evenPipe[1], 1) < 0){
               printf("Couldnt set writing at number %d!\n", k); return 3;
             }
           }
           if(k != 0){
             close(oddPipe[1]);
-            if(dup2(0, oddPipe[0]) < 0){
+            if(dup2(oddPipe[0], 0) < 0){
               printf("Couldnt set reading at number %d!\n", k);return 3;
             }
           }
         }else{
           if(procList != NULL){
             close(oddPipe[0]);
-            if(dup2(1, oddPipe[1]) < 0){
+            if(dup2(oddPipe[1], 1) < 0){
               printf("Couldnt set writing at number %d!\n", k);return 3;
             }
           }
 
           close(evenPipe[1]);
-          if(dup2(0, evenPipe[0])< 0){
+          if(dup2(evenPipe[0], 0)< 0){
             printf("Couldnt set reading at number %d!\n", k); return 3;
           }
         }
