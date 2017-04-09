@@ -41,16 +41,23 @@ void generate(int K, int fd){
 }
 
 int main(int argc, char** argv){
+  srand(time(NULL));
+
   int N = atoi(argv[2]);
   int K = atoi(argv[3]);
 
   int fd = open(argv[1], O_WRONLY); // bede wiedzial ile bajtow chce zapisac - wystarczy mi open
   if(fd < 0){
     printf("Error opening FIFO - one of the slaves!\n");
+    kill(getppid(), SIGRTMIN);
+    return 2;
   }
-  srand(time(NULL));
+  kill(getppid(), SIGRTMIN);
+
   for(int i=0; i<N; i++){
     generate(K, fd);
   }
+  printf("Zgredek jest wolny!\n");
+  close(fd);
   return 0;
 }

@@ -12,19 +12,35 @@
 #include <complex.h>
 
 #include "helpers.h"
+
+volatile int S;
+volatile pid_t masterCp;
+volatile int fifoReady = 0;
+
 void showUsage(){
-  printf("Use program like ./main.out <path> <S> <N> <K> <R>");
+  printf("Use program like ./main.out <path> <S> <N> <K> <R>\n");
   exit(1);
+}
+
+void rtHandler(int signo){
+  if(signo == SIGRTMIN){
+    if(--S == 0) kill(masterCp, SIGRTMIN);
+  }
+  else if(signo == SIGRTMIN+1) fifoReady++;
+  else if(signo == SIGRTMIN+2){
+    write(1, "ABORDING!\n", 10);
+    exit(2);
+  }
 }
 
 int main(int argc, char** argv){
   if(argc != 6) showUsage();
-  int S = atoi(argv[2]);
+  S = atoi(argv[2]);
   int N = atoi(argv[3]);
   int K = atoi(argv[4]);
   int R = atoi(argv[5]);
 
-  if(S < 1 || S > 100){
+  if(S < 1 || S > 200){
     printf("Wrong S!\n");
     return 1;
   }
@@ -41,18 +57,38 @@ int main(int argc, char** argv){
     return 1;
   }
 
+  if(signal(SIGRTMIN, rtHandler) == SIG_ERR){
+    printf("Main couldnt set handler!\n");
+    return 3;
+  }
+  if(signal(SIGRTMIN+1, rtHandler) == SIG_ERR){
+    printf("Main couldnt set handler!\n");
+    return 3;
+  }
+  if(signal(SIGRTMIN+2, rtHandler) == SIG_ERR){
+    printf("Main couldnt set handler!\n");
+    return 3;
+  }
+
   char* masterArgv[4];
   masterArgv[0] = "./master.out";
   masterArgv[1] = argv[1];
   masterArgv[2] = argv[5];
   masterArgv[3] = NULL;
-  pid_t cp = fork();
-  if(cp == -1){
+  masterCp = fork();
+  if(masterCp == -1){
     printf("Error, couldnt fork master!\n");
     return 2;
-  }else if(cp == 0){
+  }else if(masterCp == 0){
     execvp(masterArgv[0], masterArgv);
+    printf("MASTER WASNT CREATED!\n");
+    return 3;
   }
+
+  while(fifoReady != 1){
+    sleep(1);
+  }
+  printf("I, main, received signal, that FIFO is created!\n"); fflush(stdout);
 
   char* slaveArgv[5];
   slaveArgv[0] = "./slave.out";
@@ -61,16 +97,25 @@ int main(int argc, char** argv){
   slaveArgv[3] = argv[4];
   slaveArgv[4] = NULL;
 
-  for(int i=0; i<S; i++){
+  int slaveNmb = S;
+
+  for(int i=0; i<slaveNmb; i++){
     pid_t cp = fork();
     if(cp == -1){
       printf("Error, couldnt fork slave!\n");
       return 2;
     }else if(cp == 0){
       execvp(slaveArgv[0], slaveArgv);
+      printf("SLAVE WASNT CREATED!\n");
+      return 3;
     }
   }
 
   printf("All programs are started at this point!\n");
+  while(1){
+    wait(NULL); // czekaj na dzieci
+    if (errno == ECHILD) break;
+  }
+  printf("All programs are finished at this point!\n");
   return 0;
 }
