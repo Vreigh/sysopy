@@ -41,7 +41,7 @@ void generate(int K, int fd){
 }
 
 int main(int argc, char** argv){
-  srand(time(NULL));
+  srand(time(NULL) * getpid());
 
   int N = atoi(argv[2]);
   int K = atoi(argv[3]);
