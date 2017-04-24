@@ -15,7 +15,6 @@
 #include "communication.h"
 
 void registerClient(key_t privateKey);
-int getPublicID();
 void rqEcho(struct Msg *msg);
 void rqEchoUpper(struct Msg *msg);
 void rqTime(struct Msg *msg);
@@ -27,11 +26,10 @@ int privateID = -1;
 
 void rmQueue(void){
   if(privateID > -1){
-    int tmp = msgctl(privateID, IPC_RMID, NULL);
-    if(tmp == -1){
+    if(msgctl(privateID, IPC_RMID, NULL) == -1){
       printf("There was some error deleting server's queue!\n");
     }
-    printf("Client's queue deleted successfully!\n");
+    else printf("Client's queue deleted successfully!\n");
   }
 }
 

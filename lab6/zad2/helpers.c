@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <ctype.h>
+#include <time.h>
+#include <mqueue.h>
 #include "helpers.h"
 
 char* concat(const char* one, const char* two){
@@ -74,4 +79,17 @@ char* trimWhite(char* origStr){ // dziala podobnie do zadania z assemblerow, ale
   buffer[j++] = 0;
   buffer = realloc(buffer, j); // bezcenny ram
   return buffer;
+}
+
+void throw(const char* err){
+  printf("Error! %s Errno: %d\n", err, errno);
+  exit(3);
+}
+
+char* convertTime(const time_t* mtime){
+  char* buff = malloc(sizeof(char) * 30);
+  struct tm * timeinfo;
+  timeinfo = localtime (mtime);
+  strftime(buff, 20, "%b %d %H:%M", timeinfo);
+  return buff;
 }

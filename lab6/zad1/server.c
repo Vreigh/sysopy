@@ -55,8 +55,7 @@ int main(int argc, char** argv){
   Msg buff;
   while(1){
     if(active == 0){
-      int tmp = msgctl(publicID, IPC_STAT, &currentState);
-      if(tmp == -1) throw("Getting current state of public queue failed!\n");
+      if(msgctl(publicID, IPC_STAT, &currentState) == -1) throw("Getting current state of public queue failed!\n");
       if(currentState.msg_qnum == 0) break;
     }
 
@@ -94,7 +93,7 @@ void doLogin(struct Msg* msg){
   if(sscanf(msg->cont, "%d", &clientQKey) < 0) throw("Reading clientKey failed!");
 
   int clientQID = msgget(clientQKey, 0);
-  if(clientQID == -1 ) throw("Reading clientID failed!");
+  if(clientQID == -1 ) throw("Reading clientQID failed!");
 
   int clientPID = msg->senderPID;
   msg->mtype = INIT;
