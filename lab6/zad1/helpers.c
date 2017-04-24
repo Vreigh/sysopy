@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <ctype.h>
+#include <time.h>
 #include "helpers.h"
 
 char* concat(const char* one, const char* two){
@@ -88,4 +93,14 @@ char* convertTime(const time_t* mtime){
   timeinfo = localtime (mtime);
   strftime(buff, 20, "%b %d %H:%M", timeinfo);
   return buff;
+}
+
+int getQID(char* path, int ID){
+  int key = ftok(path, ID);
+  if(key == -1) throw("Generation of key failed!");
+
+  int QID = msgget(key, 0);
+  if(QID == -1) throw("Opening queue failed!");
+
+  return QID;
 }

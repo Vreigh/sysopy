@@ -39,6 +39,8 @@ void rmQueue(void){
 }
 
 int main(int argc, char** argv){
+  if(atexit(rmQueue) == -1) throw("Registering server's atexit failed!");
+
   struct msqid_ds currentState;
 
   char* path = getenv("HOME");
@@ -50,10 +52,7 @@ int main(int argc, char** argv){
   publicID = msgget(publicKey, IPC_CREAT | IPC_EXCL | 0666);
   if(publicID == -1) throw("Creation of public queue failed!");
 
-  if(atexit(rmQueue) == -1) throw("Registering server's atexit failed!");
-
   Msg buff;
-  return 0;
   while(1){
     if(active == 0){
       int tmp = msgctl(publicID, IPC_STAT, &currentState);
@@ -91,8 +90,8 @@ void publicQueueExecute(struct Msg* msg){
 }
 
 void doLogin(struct Msg* msg){
-  long clientQKey;
-  if(sscanf(msg->cont, "%ld", &clientQKey) < 0) throw("Reading clientKey failed!");
+  key_t clientQKey;
+  if(sscanf(msg->cont, "%d", &clientQKey) < 0) throw("Reading clientKey failed!");
 
   int clientQID = msgget(clientQKey, 0);
   if(clientQID == -1 ) throw("Reading clientID failed!");
@@ -101,13 +100,13 @@ void doLogin(struct Msg* msg){
   msg->mtype = INIT;
   msg->senderPID = getpid();
 
-  if(clientCnt > 4){
+  if(clientCnt > MAX_CLIENTS - 1){
     printf("Maximum amount of clients reached!\n");
     sprintf(msg->cont, "%d", -1);
   }else{
     clientsData[clientCnt][0] = clientPID;
     clientsData[clientCnt++][1] = clientQID;
-    sprintf(msg->cont, "%d", clientCnt);
+    sprintf(msg->cont, "%d", clientCnt-1);
   }
 
   if(msgsnd(clientQID, msg, MSG_SIZE, 0) == -1) throw("LOGIN response failed!");
@@ -140,7 +139,7 @@ void doTime(struct Msg* msg){
   sprintf(msg->cont, "%s", timeStr);
   free(timeStr);
 
-  if(msgsnd(clientQID, msg, MSG_SIZE, 0) == -1) throw("ECHO_UPPER response failed!");
+  if(msgsnd(clientQID, msg, MSG_SIZE, 0) == -1) throw("TIME response failed!");
 }
 
 void doEnd(struct Msg* msg){

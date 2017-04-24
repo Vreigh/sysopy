@@ -12,4 +12,5 @@ char* popFragment(char** origStr, char delim);
 char* trimWhite(char* origStr);
 void throw(const char* err);
 char* convertTime(const time_t* mtime);
+int getQID(char* path, int ID);
 #endif
