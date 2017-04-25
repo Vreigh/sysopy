@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include "helpers.h" // popFragment, trimWhite
 #include "communication.h"
@@ -20,6 +21,7 @@ void doEcho(struct Msg* msg);
 void doEchoUpper(struct Msg* msg);
 void doTime(struct Msg* msg);
 void doEnd(struct Msg* msg);
+void doQuit(struct Msg* msg);
 int findMQD(pid_t senderPID);
 int prepareMsg(struct Msg* msg);
 
@@ -33,25 +35,42 @@ void rmQueue(void){
     if(mq_close(clientsData[i][1]) == -1){
       printf("Error closing %d client queue\n", i);
     }
+    if(kill(clientsData[i][0], SIGINT) == -1){
+      printf("Error killing %d client!\n", i);
+    }
   }
   if(publicID > -1){
+    if(mq_close(publicID) == -1){
+      printf("Error closing public queue\n");
+    }
+    else printf("Server queue closed!\n");
+
     if(mq_unlink(serverPath) == -1) printf("Error deleting public Queue!\n");
     else printf("Server queue deleted successfully!\n");
-  }
+  }else printf("There was no need of deleting queue!\n");
+}
+
+void intHandler(int signo){
+  exit(2);
 }
 
 int main(int argc, char** argv){
   if(atexit(rmQueue) == -1) throw("Registering server's atexit failed!");
+  if(signal(SIGINT, intHandler) == SIG_ERR) throw("Registering INT failed!");
   struct mq_attr currentState;
 
-  publicID = mq_open(serverPath, O_RDONLY | O_CREAT | O_EXCL, 0666, NULL);
+  struct mq_attr posixAttr;
+  posixAttr.mq_maxmsg = MAX_MQSIZE;
+  posixAttr.mq_msgsize = MSG_SIZE;
+
+  publicID = mq_open(serverPath, O_RDONLY | O_CREAT | O_EXCL, 0666, &posixAttr);
   if(publicID == -1) throw("Creation of public queue failed!");
 
   Msg buff;
   while(1){
     if(active == 0){
       if(mq_getattr(publicID, &currentState) == -1) throw("Couldnt read public queue parameters!");
-      if(currentState.mq_curmsgs == 0) break;
+      if(currentState.mq_curmsgs == 0) exit(0);
     }
 
     if(mq_receive(publicID,(char*) &buff, MSG_SIZE, NULL) == -1) throw("Receiving message by server failed!");
@@ -65,21 +84,24 @@ void publicQueueExecute(struct Msg* msg){
   switch(msg->mtype){
     case LOGIN:
       doLogin(msg);
-    break;
+      break;
     case ECHO:
       doEcho(msg);
-    break;
+      break;
     case UPPER:
       doEchoUpper(msg);
-    break;
+      break;
     case TIME:
       doTime(msg);
-    break;
+      break;
     case END:
       doEnd(msg);
-    break;
+      break;
+    case QUIT:
+      doQuit(msg);
+      break;
     default:
-    break;
+      break;
   }
 }
 
@@ -140,6 +162,23 @@ void doTime(struct Msg* msg){
 void doEnd(struct Msg* msg){
   active = 0;
 }
+void doQuit(struct Msg* msg){
+  int i;
+  for(i=0; i<clientCnt; i++){
+    if(clientsData[i][0] == msg->senderPID) break;
+  }
+  if(i == clientCnt){
+    printf("Client Not Found!\n");
+    return;
+  }
+  if(mq_close(clientsData[i][1]) == -1) throw("Closing clients queue in QUIT response failed!");
+  for(i = i; i+1 < clientCnt; i++){
+    clientsData[i][0] = clientsData[i+1][0];
+    clientsData[i][1] = clientsData[i+1][1];
+  }
+  clientCnt--;
+  printf("Successfully shifted clientsData!\n");
+}
 
 int prepareMsg(struct Msg* msg){
   int clientMQD = findMQD(msg->senderPID);
@@ -155,7 +194,7 @@ int prepareMsg(struct Msg* msg){
 }
 
 int findMQD(pid_t senderPID){
-  for(int i=0; i<MAX_CLIENTS; i++){
+  for(int i=0; i<clientCnt; i++){
     if(clientsData[i][0] == senderPID) return clientsData[i][1];
   }
   return -1;

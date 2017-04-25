@@ -10,6 +10,7 @@
 #include <sys/msg.h>
 #include <ctype.h>
 #include <time.h>
+#include <signal.h>
 
 #include "helpers.h" // popFragment, trimWhite, getQID
 #include "communication.h"
@@ -27,14 +28,19 @@ int privateID = -1;
 void rmQueue(void){
   if(privateID > -1){
     if(msgctl(privateID, IPC_RMID, NULL) == -1){
-      printf("There was some error deleting server's queue!\n");
+      printf("There was some error deleting clients's queue!\n");
     }
     else printf("Client's queue deleted successfully!\n");
   }
 }
 
+void intHandler(int signo){
+  exit(2);
+}
+
 int main(int argc, char** argv){
   if(atexit(rmQueue) == -1) throw("Registering client's atexit failed!");
+  if(signal(SIGINT, intHandler) == SIG_ERR) throw("Registering INT failed!");
 
   char* path = getenv("HOME");
   if(path == NULL) throw("Getting enviromental variable 'HOME' failed!");
@@ -71,7 +77,7 @@ int main(int argc, char** argv){
     }else if(strcmp(cmd, "end") == 0){
       rqEnd(&msg);
     }else if(strcmp(cmd, "q") == 0){
-      break;
+      exit(0);
     }else printf("Wrong command!\n");
   }
   return 0;

@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include "helpers.h" // popFragment, trimWhite, getQID
 #include "communication.h"
@@ -19,6 +20,7 @@ void rqEcho(struct Msg *msg);
 void rqEchoUpper(struct Msg *msg);
 void rqTime(struct Msg *msg);
 void rqEnd(struct Msg *msg);
+void rqQ(struct Msg *msg);
 
 int sessionID = -2;
 mqd_t publicID = -1;
@@ -27,22 +29,42 @@ char myPath[20];
 
 void rmQueue(void){
   if(privateID > -1){
+    if(sessionID >= 0){
+      printf("\nBefore quitting, i will try to send QUIT request to public queue!\n");
+      Msg msg;
+      msg.senderPID = getpid();
+      rqQ(&msg);
+    }
+
+    if(mq_close(privateID) == -1){
+      printf("There was some error closing client's queue!\n");
+    }
+    else printf("Client's queue closed successfully!\n");
+
     if(mq_unlink(myPath) == -1){
-      printf("There was some error deleting server's queue!\n");
+      printf("There was some error deleting client's queue!\n");
     }
     else printf("Client's queue deleted successfully!\n");
-  }
+  } else printf("There was no need of deleting queue!\n");
+}
+void intHandler(int signo){
+  exit(2);
 }
 
 int main(int argc, char** argv){
   if(atexit(rmQueue) == -1) throw("Registering client's atexit failed!");
+  if(signal(SIGINT, intHandler) == SIG_ERR) throw("Registering INT failed!");
 
   sprintf(myPath, "/%d", getpid());
 
   publicID = mq_open(serverPath, O_WRONLY);
   if(publicID == -1) throw("Opening public queue failed!");
 
-  privateID = mq_open(myPath, O_RDONLY | O_CREAT | O_EXCL, 0666, NULL);
+  struct mq_attr posixAttr;
+  posixAttr.mq_maxmsg = MAX_MQSIZE;
+  posixAttr.mq_msgsize = MSG_SIZE;
+
+  privateID = mq_open(myPath, O_RDONLY | O_CREAT | O_EXCL, 0666, &posixAttr);
   if(privateID == -1) throw("Creation of private queue failed!");
 
   registerClient();
@@ -69,7 +91,7 @@ int main(int argc, char** argv){
     }else if(strcmp(cmd, "end") == 0){
       rqEnd(&msg);
     }else if(strcmp(cmd, "q") == 0){
-      break;
+      exit(0);
     }else printf("Wrong command!\n");
   }
   return 0;
@@ -119,4 +141,10 @@ void rqEnd(struct Msg *msg){
   msg->mtype = END;
 
   if(mq_send(publicID, (char*) msg, MSG_SIZE, 1) == -1) throw("END request failed!");
+}
+void rqQ(struct Msg *msg){
+  msg->mtype = QUIT;
+
+  if(mq_send(publicID, (char*) msg, MSG_SIZE, 1) == -1) printf("END request failed - Server may have already been closed!\n");
+  fflush(stdout);
 }

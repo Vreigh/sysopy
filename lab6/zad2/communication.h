@@ -4,9 +4,11 @@
 #define MAX_CLIENTS  10
 #define PROJECT_ID 37
 #define MAX_CONT_SIZE 50
+#define MSG_SIZE sizeof(Msg)
+#define MAX_MQSIZE 9
 
 typedef enum mtype{
-  LOGIN = 1, ECHO = 2, UPPER = 3, TIME = 4, END = 5, INIT = 6
+  LOGIN = 1, ECHO = 2, UPPER = 3, TIME = 4, END = 5, INIT = 6, QUIT = 7
 } mtype;
 
 typedef struct Msg{
@@ -15,7 +17,7 @@ typedef struct Msg{
   char cont[MAX_CONT_SIZE];
 } Msg;
 
-const size_t MSG_SIZE = sizeof(Msg);
-const char* serverPath = "/server";
+//const size_t MSG_SIZE = sizeof(Msg);
+const char serverPath[] = "/server";
 
 #endif

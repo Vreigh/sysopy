@@ -10,6 +10,7 @@
 #include <sys/msg.h>
 #include <ctype.h>
 #include <time.h>
+#include <signal.h>
 
 #include "helpers.h" // popFragment, trimWhite
 #include "communication.h"
@@ -38,8 +39,13 @@ void rmQueue(void){
   }
 }
 
+void intHandler(int signo){
+  exit(2);
+}
+
 int main(int argc, char** argv){
   if(atexit(rmQueue) == -1) throw("Registering server's atexit failed!");
+  if(signal(SIGINT, intHandler) == SIG_ERR) throw("Registering INT failed!");
 
   struct msqid_ds currentState;
 
