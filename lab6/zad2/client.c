@@ -36,6 +36,11 @@ void rmQueue(void){
       rqQ(&msg);
     }
 
+    if(mq_close(publicID) == -1){
+      printf("There was some error closing servers's queue!\n");
+    }
+    else printf("Servers's queue closed successfully!\n");
+
     if(mq_close(privateID) == -1){
       printf("There was some error closing client's queue!\n");
     }
