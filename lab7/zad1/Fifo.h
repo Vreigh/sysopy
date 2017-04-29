@@ -10,5 +10,9 @@ typedef struct Fifo{
 } Fifo;
 
 void fifoInit(Fifo* fifo, int cn);
+pid_t popFifo(Fifo* fifo);
+int pushFifo(Fifo* fifo, pid_t x);
+int isEmptyFifo(Fifo* fifo);
+int isFullFifo(Fifo* fifo);
 
 #endif

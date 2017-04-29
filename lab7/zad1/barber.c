@@ -25,7 +25,7 @@ void showUsage(){
   exit(1);
 }
 void validateChNum(int num){
-  if(num < 0 || num > 1000) throw("Wrong number of Chairs!");
+  if(num < 5 || num > 1000) throw("Wrong number of Chairs!");
 }
 void intHandler(int signo){
   exit(2);
@@ -35,6 +35,8 @@ void clearResources(void);
 void prepareFifo(int chNum);
 void prepareSemafors();
 void napAndWorkForever();
+void cut(pid_t pid);
+pid_t takeChair(struct sembuf*);
 
 key_t fifoKey;
 int shmID = -1;
@@ -56,20 +58,57 @@ int main(int argc, char** argv){
 void napAndWorkForever(){
   while(1){
     struct sembuf sops;
-    sops.sem_num = 0;
+    sops.sem_num = BARBER;
     sops.sem_op = -1;
     sops.sem_flg = 0;
 
-    if(semop(SID, &sops, 1) == -1) throw("Barber: nap sops failed!");
-    // zwiekszam semafor do 1
-    // odblokowuje spiacego klienta, ktory mnie obudzil - ten klient bedzie juz mogl zwolnic kolejke
-    // strzyze krzeslo
-    // wyjmuje kolejnych klientow z kolejki na krzeslo i strzyze krzeslo
-    // w ostatniej iteracji zmniejszam sem do 0 (UWAGA: PRZED ZWOLNIENIEM KOLEJKI)
-    // zwalniam kolejke i znowu spac
-    // nie ma znaczenia, czy zdaze sie zablokowac, czy jeszcze przed pierwszym semop jakis klient
-    // mnie obudzi - efekt bedzie ten sam: obudze sie i zaczne strzyc
+    if(semop(SID, &sops, 1) == -1) throw("Barber: 0 sops failed!"); // czekaj na obudzenie
+
+    pid_t toCut = takeChair(&sops); // pobierz wartosc krzesla
+    cut(toCut);
+
+    while(1){
+      sops.sem_num = FIFO; // dla czytelnosci
+      sops.sem_op = -1;
+      if(semop(SID, &sops, 1) == -1) throw("Barber: 3 sops failed!");
+      toCut = popFifo(fifo); // zajmij FIFO i pobierz pierwszego z kolejki
+
+      if(toCut > 0){ // jesli istnial, to zwolnij kolejke, ostrzyz i kontynuuj
+        sops.sem_op = 1;
+        if(semop(SID, &sops, 1) == -1) throw("Barber: 4 sops failed!");
+        cut(toCut);
+      }else{ // jesli kolejka pusta, to ustaw, ze spisz, zwolnij kolejke i spij dalej (wyjdz z petli)
+        printf("Barber: going to sleep...\n");
+        sops.sem_num = BARBER;
+        sops.sem_op = -1;
+        if(semop(SID, &sops, 1) == -1) throw("Barber: 5 sops failed!");
+
+        sops.sem_num = FIFO;
+        sops.sem_op = 1;
+        if(semop(SID, &sops, 1) == -1) throw("Barber: 6 sops failed!");
+        break;
+      }
+    }
   }
+}
+
+pid_t takeChair(struct sembuf* sops){
+  sops->sem_num = FIFO;
+  sops->sem_op = -1;
+  if(semop(SID, sops, 1) == -1) throw("Barber: 1 sops failed!");
+
+  pid_t toCut = fifo->chair;
+
+  sops->sem_op = 1;
+  if(semop(SID, sops, 1) == -1) throw("Barber: 2 sops failed!");
+
+  return toCut;
+}
+
+void cut(pid_t pid){
+  printf("Barber: preparing to cut %d\n", pid);
+  kill(pid, SIGRTMIN);
+  printf("Barber: finished cutting %d\n", pid);
 }
 
 void prepareFifo(int chNum){
@@ -79,25 +118,26 @@ void prepareFifo(int chNum){
   if(path == NULL) throw("Getting enviromental variable failed!");
 
   fifoKey = ftok(path, PROJECT_ID);
-  if(fifoKey == -1) throw("Barber: getting key of sm failed!");
+  if(fifoKey == -1) throw("Barber: getting key of shm failed!");
 
   shmID = shmget(fifoKey, sizeof(Fifo), IPC_CREAT | IPC_EXCL | 0666);
-  if(shmID == -1) throw("Barber: creation of sm failed!");
+  if(shmID == -1) throw("Barber: creation of shm failed!");
 
   void* tmp = (Fifo*) shmat(shmID, NULL, 0);
-  if(tmp == (void*)(-1)) throw("Barber: attaching sm failed!");
+  if(tmp == (void*)(-1)) throw("Barber: attaching shm failed!");
   fifo = (Fifo*) tmp;
 
   fifoInit(fifo, chNum);
 }
 
 void prepareSemafors(){
-  SID = semget(fifoKey, 3, IPC_CREAT | IPC_EXCL | 0666);
+  SID = semget(fifoKey, 4, IPC_CREAT | IPC_EXCL | 0666);
   if(SID == -1) throw("Barber: creation of semafors failed!");
 
   for(int i=0; i<3; i++){
     if(semctl(SID, i, SETVAL, 0) == -1) throw("Barber: Error setting semafors!");
   }
+  if(semctl(SID, 4, SETVAL, 1) == -1) throw("Barber: Error setting semafors!");
 }
 
 void clearResources(void){
