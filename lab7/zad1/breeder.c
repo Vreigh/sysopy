@@ -15,6 +15,7 @@
 #include <sys/shm.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#include <sys/wait.h>
 
 #include "helpers.h" // popFragment, trimWhite, getQID
 #include "Fifo.h"
@@ -96,22 +97,62 @@ int main(int argc, char** argv){
 
   return 0;
 }
+
 void getCut(int ctsNum){
   while(ctsCounter < ctsNum){
-    // wez checker
-    // wez kolejke
+    struct sembuf sops;
+    sops.sem_num = CHECKER;
+    sops.sem_op = -1;
+    sops.sem_flg = 0;
+    if(semop(SID, &sops, 1) == -1) throw("Client: taking checker failed!");
+
+    sops.sem_num = FIFO;
+    if(semop(SID, &sops, 1) == -1) throw("Client: taking FIFO failed!");
+
     int res = takePlace();
-    // zwolnij kolejke
-    // zwolnij checker
+
+    sops.sem_op = 1;
+    if(semop(SID, &sops, 1) == -1) throw("Client: releasing FIFO failed!");
+
+    sops.sem_num = CHECKER;
+    if(semop(SID, &sops, 1) == -1) throw("Client: releasing checker failed!");
+
     if(res != -1){
       sigsuspend(&fullMask);
+      printf("Client %d just got cut!", getpid()); fflush(stdout);
     }
   }
 }
 
 int takePlace(){
-  // barber spi - usiadz na krzesle, 2x go obudz, return 1
-  // barber pracuje - zajmij miejsce, return odpowiednia wartosc (-1 lub 0)
+  int barberStat = semctl(SID, 0, GETVAL);
+  if(barberStat == -1) throw("Client: getting value of BARBER sem failed!");
+
+  pid_t myPID = getpid();
+
+  if(barberStat == 0){
+    struct sembuf sops;
+    sops.sem_num = BARBER;
+    sops.sem_op = 1;
+    sops.sem_flg = 0;
+
+    if(semop(SID, &sops, 1) == -1) throw("Client: awakening barber failed!");
+    printf("Client %d has awakened barber!\n", myPID); fflush(stdout);
+    if(semop(SID, &sops, 1) == -1) throw("Client: awakening barber failed!");
+
+    fifo->chair = myPID;
+
+    return 1;
+  }else{
+    int res =  pushFifo(fifo, getpid());
+    if(res == -1){
+      printf("Client %d couldnt find free place!", myPID); fflush(stdout);
+      return -1;
+    }else{
+      printf("Client %d took place in the queue!\n", myPID); fflush(stdout);
+      return 0;
+    }
+  }
 }
 
 void prepareFifo(){

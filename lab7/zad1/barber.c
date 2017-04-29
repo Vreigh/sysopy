@@ -64,7 +64,7 @@ void napAndWorkForever(){
 
     if(semop(SID, &sops, 1) == -1) throw("Barber: 0 sops failed!"); // czekaj na obudzenie
 
-    pid_t toCut = takeChair(&sops); // pobierz wartosc krzesla
+    pid_t toCut = takeChair(&sops);
     cut(toCut);
 
     while(1){
@@ -73,12 +73,12 @@ void napAndWorkForever(){
       if(semop(SID, &sops, 1) == -1) throw("Barber: 3 sops failed!");
       toCut = popFifo(fifo); // zajmij FIFO i pobierz pierwszego z kolejki
 
-      if(toCut > 0){ // jesli istnial, to zwolnij kolejke, ostrzyz i kontynuuj
+      if(toCut != -1){ // jesli istnial, to zwolnij kolejke, ostrzyz i kontynuuj
         sops.sem_op = 1;
         if(semop(SID, &sops, 1) == -1) throw("Barber: 4 sops failed!");
         cut(toCut);
       }else{ // jesli kolejka pusta, to ustaw, ze spisz, zwolnij kolejke i spij dalej (wyjdz z petli)
-        printf("Barber: going to sleep...\n");
+        printf("Barber: going to sleep...\n");  fflush(stdout);
         sops.sem_num = BARBER;
         sops.sem_op = -1;
         if(semop(SID, &sops, 1) == -1) throw("Barber: 5 sops failed!");
@@ -106,9 +106,9 @@ pid_t takeChair(struct sembuf* sops){
 }
 
 void cut(pid_t pid){
-  printf("Barber: preparing to cut %d\n", pid);
+  printf("Barber: preparing to cut %d\n", pid); fflush(stdout);
   kill(pid, SIGRTMIN);
-  printf("Barber: finished cutting %d\n", pid);
+  printf("Barber: finished cutting %d\n", pid); fflush(stdout);
 }
 
 void prepareFifo(int chNum){
@@ -134,10 +134,10 @@ void prepareSemafors(){
   SID = semget(fifoKey, 4, IPC_CREAT | IPC_EXCL | 0666);
   if(SID == -1) throw("Barber: creation of semafors failed!");
 
-  for(int i=0; i<3; i++){
-    if(semctl(SID, i, SETVAL, 0) == -1) throw("Barber: Error setting semafors!");
+  for(int i=1; i<3; i++){
+    if(semctl(SID, i, SETVAL, 1) == -1) throw("Barber: Error setting semafors!");
   }
-  if(semctl(SID, 4, SETVAL, 1) == -1) throw("Barber: Error setting semafors!");
+  if(semctl(SID, 0, SETVAL, 0) == -1) throw("Barber: Error setting semafors!");
 }
 
 void clearResources(void){

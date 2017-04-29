@@ -26,13 +26,16 @@ pid_t popFifo(Fifo* fifo){
 
   if(fifo->head == fifo->tail) fifo->head = -1;
 
-  return fifo->tab[fifo->head];
+  return fifo->chair;
 }
 
 int pushFifo(Fifo* fifo, pid_t x){
-  if(isFullFifo(fifo) == 1) return 0;
+  if(isFullFifo(fifo) == 1) return -1;
+  if(isEmptyFifo(fifo) == 1){
+    fifo->head = fifo->tail;
+  }
 
   fifo->tab[fifo->tail++] = x;
   if(fifo->tail == fifo->max) fifo->tail = 0;
-  return 1;
+  return 0;
 }
