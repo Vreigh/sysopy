@@ -12,9 +12,11 @@
 #include <time.h>
 #include <signal.h>
 #include <sys/types.h>
-#include <sys/shm.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
+
+#include <sys/mman.h>
+#include <semaphore.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include "helpers.h" // popFragment, trimWhite, getQID
 #include "Fifo.h"
@@ -36,12 +38,14 @@ void prepareFifo(int chNum);
 void prepareSemafors();
 void napAndWorkForever();
 void cut(pid_t pid);
-pid_t takeChair(struct sembuf*);
+pid_t takeChair();
 
-key_t fifoKey;
-int shmID = -1;
 Fifo* fifo = NULL;
-int SID = -1;
+
+sem_t* BARBER;
+sem_t* FIFO;
+sem_t* CHECKER;
+sem_t* SLOWER;
 
 int main(int argc, char** argv){
   if(argc != 2) showUsage();
@@ -57,51 +61,40 @@ int main(int argc, char** argv){
 
 void napAndWorkForever(){
   while(1){
-    struct sembuf sops;
-    sops.sem_num = BARBER;
-    sops.sem_op = -1;
-    sops.sem_flg = 0;
+    if(sem_wait(BARBER) == -1) throw("Barber: 0 sops failed!"); // czekaj na obudzenie
 
-    if(semop(SID, &sops, 1) == -1) throw("Barber: 0 sops failed!"); // czekaj na obudzenie
+    if(sem_post(BARBER) == -1) throw("Barber: setting himself as awaken failed!");
+    if(sem_post(SLOWER) == -1) throw("Barber: freeing client failed!");
 
-    pid_t toCut = takeChair(&sops);
+    pid_t toCut = takeChair();
     cut(toCut);
 
     while(1){
-      sops.sem_num = FIFO; // dla czytelnosci
-      sops.sem_op = -1;
-      if(semop(SID, &sops, 1) == -1) throw("Barber: 3 sops failed!");
+      if(sem_wait(FIFO) == -1) throw("Barber: 3 sops failed!");
       toCut = popFifo(fifo); // zajmij FIFO i pobierz pierwszego z kolejki
 
       if(toCut != -1){ // jesli istnial, to zwolnij kolejke, ostrzyz i kontynuuj
-        sops.sem_op = 1;
-        if(semop(SID, &sops, 1) == -1) throw("Barber: 4 sops failed!");
+        if(sem_post(FIFO) == -1) throw("Barber: 4 sops failed!");
         cut(toCut);
       }else{ // jesli kolejka pusta, to ustaw, ze spisz, zwolnij kolejke i spij dalej (wyjdz z petli)
         long timeMarker = getMicroTime();
         printf("Time: %ld, Barber: going to sleep...\n", timeMarker);  fflush(stdout);
-        sops.sem_num = BARBER;
-        sops.sem_op = -1;
-        if(semop(SID, &sops, 1) == -1) throw("Barber: 5 sops failed!");
 
-        sops.sem_num = FIFO;
-        sops.sem_op = 1;
-        if(semop(SID, &sops, 1) == -1) throw("Barber: 6 sops failed!");
+        if(sem_wait(BARBER) == -1) throw("Barber: 5 sops failed!");
+
+        if(sem_post(FIFO) == -1) throw("Barber: 6 sops failed!");
         break;
       }
     }
   }
 }
 
-pid_t takeChair(struct sembuf* sops){
-  sops->sem_num = FIFO;
-  sops->sem_op = -1;
-  if(semop(SID, sops, 1) == -1) throw("Barber: 1 sops failed!");
+pid_t takeChair(){
+  if(sem_wait(FIFO) == -1) throw("Barber: 1 sem failed!");
 
   pid_t toCut = fifo->chair;
 
-  sops->sem_op = 1;
-  if(semop(SID, sops, 1) == -1) throw("Barber: 2 sops failed!");
+  if(sem_post(FIFO) == -1) throw("Barber: 2 sem failed!");
 
   return toCut;
 }
@@ -119,16 +112,12 @@ void cut(pid_t pid){
 void prepareFifo(int chNum){
   validateChNum(chNum);
 
-  char* path = getenv(env);
-  if(path == NULL) throw("Getting enviromental variable failed!");
+  int shmID = shm_open(shmPath, O_CREAT | O_EXCL | O_RDWR, 0666);
+  if(shmID == -1) throw("Barber: creating shared memory failed!");
 
-  fifoKey = ftok(path, PROJECT_ID);
-  if(fifoKey == -1) throw("Barber: getting key of shm failed!");
+  if(ftruncate(shmID, sizeof(Fifo)) == -1) throw("Barber: truncating shm failed!");
 
-  shmID = shmget(fifoKey, sizeof(Fifo), IPC_CREAT | IPC_EXCL | 0666);
-  if(shmID == -1) throw("Barber: creation of shm failed!");
-
-  void* tmp = (Fifo*) shmat(shmID, NULL, 0);
+  void* tmp = mmap(NULL, sizeof(Fifo), PROT_READ | PROT_WRITE, MAP_SHARED, shmID, 0);
   if(tmp == (void*)(-1)) throw("Barber: attaching shm failed!");
   fifo = (Fifo*) tmp;
 
@@ -136,22 +125,37 @@ void prepareFifo(int chNum){
 }
 
 void prepareSemafors(){
-  SID = semget(fifoKey, 4, IPC_CREAT | IPC_EXCL | 0666);
-  if(SID == -1) throw("Barber: creation of semafors failed!");
+  BARBER = sem_open(barberPath, O_CREAT | O_EXCL | O_RDWR, 0666, 0);
+  if(BARBER == SEM_FAILED) throw("Barber: creating semafors failed!");
 
-  for(int i=1; i<3; i++){
-    if(semctl(SID, i, SETVAL, 1) == -1) throw("Barber: Error setting semafors!");
-  }
-  if(semctl(SID, 0, SETVAL, 0) == -1) throw("Barber: Error setting semafors!");
+  FIFO = sem_open(fifoPath, O_CREAT | O_EXCL | O_RDWR, 0666, 1);
+  if(FIFO == SEM_FAILED) throw("Barber: creating semafors failed!");
+
+  CHECKER = sem_open(checkerPath, O_CREAT | O_EXCL | O_RDWR, 0666, 1);
+  if(CHECKER == SEM_FAILED) throw("Barber: creating semafors failed!");
+
+  SLOWER = sem_open(slowerPath, O_CREAT | O_EXCL | O_RDWR, 0666, 0);
+  if(SLOWER == SEM_FAILED) throw("Barber: creating semafors failed!");
 }
 
 void clearResources(void){
-  if(shmdt(fifo) == -1) printf("Barber: Error detaching fifo sm!\n");
+  if(munmap(fifo, sizeof(fifo)) == -1) printf("Barber: Error detaching fifo sm!\n");
   else printf("Barber: detached fifo sm!\n");
 
-  if(shmctl(shmID, IPC_RMID, NULL) == -1) printf("Barber: Error deleting fifo sm!\n");
+  if(shm_unlink(shmPath) == -1) printf("Barber: Error deleting fifo sm!\n");
   else printf("Barber: deleted fifo sm!\n");
 
-  if(semctl(SID, 0, IPC_RMID) == -1) printf("Barber: Error deleting semafors!");
-  else printf("Barber: deleted semafors!\n");
+  if(sem_close(BARBER) == -1) printf("Barber: Error closing semafors!");
+  if(sem_unlink(barberPath) == -1) printf("Barber: Error deleting semafors!");
+
+  if(sem_close(FIFO) == -1) printf("Barber: Error closing semafors!");
+  if(sem_unlink(fifoPath) == -1) printf("Barber: Error deleting semafors!");
+
+  if(sem_close(CHECKER) == -1) printf("Barber: Error closing semafors!");
+  if(sem_unlink(checkerPath) == -1) printf("Barber: Error deleting semafors!");
+
+  if(sem_close(SLOWER) == -1) printf("Barber: Error closing semafors!");
+  if(sem_unlink(slowerPath) == -1) printf("Barber: Error deleting semafors!");
+
+  printf("If no errors are shown, all semaphors has been successfully closed and unlinked!\n");
 }

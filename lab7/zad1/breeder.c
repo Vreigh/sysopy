@@ -120,7 +120,7 @@ void getCut(int ctsNum){
     if(res != -1){
       sigsuspend(&fullMask);
       long timeMarker = getMicroTime();
-      printf("Time: %ld, Client %d just got cut!", timeMarker, getpid()); fflush(stdout);
+      printf("Time: %ld, Client %d just got cut!\n", timeMarker, getpid()); fflush(stdout);
     }
   }
 }
@@ -146,7 +146,7 @@ int takePlace(){
 
     return 1;
   }else{
-    int res =  pushFifo(fifo, getpid());
+    int res =  pushFifo(fifo, myPID);
     if(res == -1){
       long timeMarker = getMicroTime();
       printf("Time: %ld, Client %d couldnt find free place!\n", timeMarker, myPID); fflush(stdout);
@@ -169,7 +169,7 @@ void prepareFifo(){
   shmID = shmget(fifoKey, 0, 0);
   if(shmID == -1) throw("Breeder: opening shm failed!");
 
-  void* tmp = (Fifo*) shmat(shmID, NULL, 0);
+  void* tmp = shmat(shmID, NULL, 0);
   if(tmp == (void*)(-1)) throw("Breeder: attaching shm failed!");
   fifo = (Fifo*) tmp;
 }

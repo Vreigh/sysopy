@@ -6,16 +6,17 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <sys/ipc.h>
 #include <sys/msg.h>
 #include <ctype.h>
 #include <time.h>
 #include <signal.h>
 #include <sys/types.h>
-#include <sys/shm.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
 #include <sys/wait.h>
+
+#include <sys/mman.h>
+#include <semaphore.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include "helpers.h" // popFragment, trimWhite, getQID
 #include "Fifo.h"
@@ -50,10 +51,12 @@ void freeResources(void);
 int takePlace();
 void getCut(int ctsNum);
 
-key_t fifoKey;
-int shmID = -1;
 Fifo* fifo = NULL;
-int SID = -1;
+
+sem_t* BARBER;
+sem_t* FIFO;
+sem_t* CHECKER;
+sem_t* SLOWER;
 
 volatile int ctsCounter = 0;
 sigset_t fullMask;
@@ -100,53 +103,41 @@ int main(int argc, char** argv){
 
 void getCut(int ctsNum){
   while(ctsCounter < ctsNum){
-    struct sembuf sops;
-    sops.sem_num = CHECKER;
-    sops.sem_op = -1;
-    sops.sem_flg = 0;
-    if(semop(SID, &sops, 1) == -1) throw("Client: taking checker failed!");
+    if(sem_wait(CHECKER) == -1) throw("Client: taking checker failed!");
 
-    sops.sem_num = FIFO;
-    if(semop(SID, &sops, 1) == -1) throw("Client: taking FIFO failed!");
+    if(sem_wait(FIFO) == -1) throw("Client: taking FIFO failed!");
 
     int res = takePlace();
 
-    sops.sem_op = 1;
-    if(semop(SID, &sops, 1) == -1) throw("Client: releasing FIFO failed!");
+    if(sem_post(FIFO) == -1) throw("Client: releasing FIFO failed!");
 
-    sops.sem_num = CHECKER;
-    if(semop(SID, &sops, 1) == -1) throw("Client: releasing checker failed!");
+    if(sem_post(CHECKER) == -1) throw("Client: releasing checker failed!");
 
     if(res != -1){
       sigsuspend(&fullMask);
       long timeMarker = getMicroTime();
-      printf("Time: %ld, Client %d just got cut!", timeMarker, getpid()); fflush(stdout);
+      printf("Time: %ld, Client %d just got cut!\n", timeMarker, getpid()); fflush(stdout);
     }
   }
 }
 
 int takePlace(){
-  int barberStat = semctl(SID, 0, GETVAL);
-  if(barberStat == -1) throw("Client: getting value of BARBER sem failed!");
+  int barberStat;
+  if(sem_getvalue(BARBER, &barberStat) == -1) throw("Client: getting value of BARBER sem failed!");
 
   pid_t myPID = getpid();
 
   if(barberStat == 0){
-    struct sembuf sops;
-    sops.sem_num = BARBER;
-    sops.sem_op = 1;
-    sops.sem_flg = 0;
-
-    if(semop(SID, &sops, 1) == -1) throw("Client: awakening barber failed!");
+    if(sem_post(BARBER) == -1) throw("Client: awakening barber failed!");
     long timeMarker = getMicroTime();
     printf("Time: %ld, Client %d has awakened barber!\n", timeMarker, myPID); fflush(stdout);
-    if(semop(SID, &sops, 1) == -1) throw("Client: awakening barber failed!");
+    if(sem_wait(SLOWER) == -1) throw("Client: waiting for barber failed!"); // waiting for barber to set his value to 1
 
     fifo->chair = myPID;
 
     return 1;
   }else{
-    int res =  pushFifo(fifo, getpid());
+    int res =  pushFifo(fifo, myPID);
     if(res == -1){
       long timeMarker = getMicroTime();
       printf("Time: %ld, Client %d couldnt find free place!\n", timeMarker, myPID); fflush(stdout);
@@ -160,23 +151,28 @@ int takePlace(){
 }
 
 void prepareFifo(){
-  char* path = getenv(env);
-  if(path == NULL) throw("Breeder: Getting enviromental variable failed!");
+  int shmID = shm_open(shmPath, O_RDWR, 0666);
+  if(shmID == -1) throw("Breeder: opening shared memory failed!");
 
-  fifoKey = ftok(path, PROJECT_ID);
-  if(fifoKey == -1) throw("Breeder: getting key of shm failed!");
+  //if(ftruncate(shmID, sizeof(Fifo)) == -1) throw("Breeder: truncating shm failed!");
 
-  shmID = shmget(fifoKey, 0, 0);
-  if(shmID == -1) throw("Breeder: opening shm failed!");
-
-  void* tmp = (Fifo*) shmat(shmID, NULL, 0);
+  void* tmp = mmap(NULL, sizeof(Fifo), PROT_READ | PROT_WRITE, MAP_SHARED, shmID, 0);
   if(tmp == (void*)(-1)) throw("Breeder: attaching shm failed!");
   fifo = (Fifo*) tmp;
 }
 
 void prepareSemafors(){
-  SID = semget(fifoKey, 0, 0);
-  if(SID == -1) throw("Breeder: opening semafors failed!");
+  BARBER = sem_open(barberPath, O_RDWR);
+  if(BARBER == SEM_FAILED) throw("Breeder: creating semafors failed!");
+
+  FIFO = sem_open(fifoPath, O_RDWR);
+  if(FIFO == SEM_FAILED) throw("Breeder: creating semafors failed!");
+
+  CHECKER = sem_open(checkerPath, O_RDWR);
+  if(CHECKER == SEM_FAILED) throw("Breeder: creating semafors failed!");
+
+  SLOWER = sem_open(slowerPath, O_RDWR);
+  if(SLOWER == SEM_FAILED) throw("Breeder: creating semafors failed!");
 }
 
 void prepareFullMask(){
@@ -186,6 +182,13 @@ void prepareFullMask(){
 }
 
 void freeResources(void){
-  if(shmdt(fifo) == -1) printf("Breeder: Error detaching fifo sm!\n");
+  if(munmap(fifo, sizeof(fifo)) == -1) printf("Breeder: Error detaching fifo sm!\n");
   else printf("Breeder: detached fifo sm!\n");
+
+  if(sem_close(BARBER) == -1) printf("Barber: Error closing semafors!");
+  if(sem_close(FIFO) == -1) printf("Barber: Error closing semafors!");
+  if(sem_close(CHECKER) == -1) printf("Barber: Error closing semafors!");
+  if(sem_close(SLOWER) == -1) printf("Barber: Error closing semafors!");
+
+  printf(" OK!");
 }

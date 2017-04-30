@@ -128,7 +128,7 @@ void prepareFifo(int chNum){
   shmID = shmget(fifoKey, sizeof(Fifo), IPC_CREAT | IPC_EXCL | 0666);
   if(shmID == -1) throw("Barber: creation of shm failed!");
 
-  void* tmp = (Fifo*) shmat(shmID, NULL, 0);
+  void* tmp = shmat(shmID, NULL, 0);
   if(tmp == (void*)(-1)) throw("Barber: attaching shm failed!");
   fifo = (Fifo*) tmp;
 
