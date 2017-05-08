@@ -104,6 +104,7 @@ void cut(pid_t pid){
   printf("Time: %ld, Barber: preparing to cut %d\n", timeMarker, pid); fflush(stdout);
 
   kill(pid, SIGRTMIN);
+  //if(sem_post(WAITER) == -1) throw("Barber: cutting failed!")
 
   timeMarker = getMicroTime();
   printf("Time: %ld, Barber: finished cutting %d\n", timeMarker, pid); fflush(stdout);
