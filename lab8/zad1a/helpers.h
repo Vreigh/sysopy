@@ -14,4 +14,10 @@ void throw(const char* err);
 char* convertTime(const time_t* mtime);
 int getQID(char* path, int ID);
 long getMicroTime();
+
+typedef struct Record{
+  int id;
+  char text[1021];
+}Record;
+
 #endif

@@ -42,11 +42,13 @@ int main(int argc, char** argv){
 
   for(int i=0; i<R; i++){
     if(write(fd, &i, sizeof(int)) == -1) throw("Writing failed!");
-    for(int j=0; j<255; j++){
-      int tmp = 97 + rand()%26;
-      if(write(fd, &tmp, sizeof(int)) == -1) throw("Writing failed!");
+    for(int j=0; j<1020; j++){
+      char ran = 'a' + (char)(rand()%26);
+      if(write(fd, &ran, 1) == -1) throw("Writing failed!");
     }
   }
+
+  printf("%ld %ld\n", sizeof(int), sizeof(void*));
 
   return 0;
 }
