@@ -74,7 +74,7 @@ int main(int argc, char** argv){
 }
 
 void* threadJob(void* arg){
-  if(pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL) != 0) throw("Error setting cancel type!");
+  if(pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL) != 0) throw("Error setting cancel state!");
 
   Record* records = malloc(sizeof(Record) * toRead);
   if(pthread_setspecific(keys[(long)arg], records) != 0) throw("setting key failed!");
@@ -105,6 +105,10 @@ void* threadJob(void* arg){
         return NULL;
       }
     }
+
+    if(pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL) != 0) throw("Error setting cancel state!");
+    pthread_testcancel();
+    if(pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL) != 0) throw("Error setting cancel state!");
   }
   // doszedlem do konca pliku bez skutku - nic nie rob, po prostu sie skoncz
   printf("No success!\n");

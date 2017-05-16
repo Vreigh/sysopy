@@ -29,7 +29,7 @@ char* validateFilename(char* name);
 char* validateWord(char* word);
 
 void* threadJob(void*);
-void handleSuccess();
+void decLeft();
 
 FILE* fp;
 int toRead;
@@ -37,8 +37,9 @@ char* word;
 int tNum;
 pthread_t* threads;
 pthread_mutex_t fileAccess = PTHREAD_MUTEX_INITIALIZER;
-pthread_key_t* keys;
-
+pthread_mutex_t checker = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t checkerSig =  PTHREAD_COND_INITIALIZER;
+int left;
 
 int main(int argc, char** argv){
   if(argc != 5) showUsage();
@@ -48,36 +49,31 @@ int main(int argc, char** argv){
   toRead = validateR(atoi(argv[3]));
   word = concat("", validateWord(argv[4])); // kopia slowa na stercie
 
+  left = tNum;
+
   fp = fopen(fname, "r");
   if(fp == NULL) throw("Opening file failed!");
 
   threads = malloc(tNum * sizeof(pthread_t));
-  keys = malloc(tNum * sizeof(pthread_key_t));
 
   pthread_attr_t thAttr;
   if(pthread_attr_init(&thAttr) != 0) throw("pthread_attr_init failed!");
+  if(pthread_attr_setdetachstate(&thAttr, PTHREAD_CREATE_DETACHED) != 0) throw("setting attr failed!");
 
   for(long i=0; i<tNum; i++){
-    if(pthread_key_create(&keys[i], NULL) != 0) throw("Creating key failed!");
     if(pthread_create(&threads[i], &thAttr, threadJob, (void*)i) != 0) throw("Creating thread failed!");
   }
 
-  for(int i=0; i<tNum; i++){
-    if(pthread_join(threads[i], NULL) != 0) throw("joining failed!");
-    Record* toDelete = (Record*)pthread_getspecific(keys[i]);
-    if(toDelete != NULL) free(toDelete);
-  }
+  pthread_mutex_lock(&checker);
+  while(left != 0) pthread_cond_wait(&checkerSig, &checker);
+  pthread_mutex_unlock(&checker);
 
   printf("All done\n");
-
   return 0;
 }
 
 void* threadJob(void* arg){
-  if(pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL) != 0) throw("Error setting cancel type!");
-
   Record* records = malloc(sizeof(Record) * toRead);
-  if(pthread_setspecific(keys[(long)arg], records) != 0) throw("setting key failed!");
 
   // rozpocznij czytanie
   int loopEnd = 0;
@@ -100,27 +96,24 @@ void* threadJob(void* arg){
         printf("I, thread %ld, of index %ld, have succeded! The word %s has been found in record: %d!\n",
         gettid(),(long)arg, word, records[i].id);
 
-        handleSuccess();
-        printf("I handled my success!\n");
+        free(records);
+        decLeft();
         return NULL;
       }
     }
   }
   // doszedlem do konca pliku bez skutku - nic nie rob, po prostu sie skoncz
   printf("No success!\n");
+  free(records);
+  decLeft();
   return NULL;
 }
 
-void handleSuccess(){
-  pthread_t self = pthread_self();
-  for(int i=0; i<tNum; i++){
-    if(pthread_equal(self, threads[i]) == 0){
-      printf("I, thread %ld, will try to cancel %i fella!\n", gettid(), i);
-      if(pthread_cancel(threads[i]) != 0){
-        printf("I, thread %ld failed to cancel thread of index %d!\n", gettid(), i);
-      }
-    }
-  }
+void decLeft(){
+  pthread_mutex_lock(&checker);
+  left--;
+  pthread_cond_signal(&checkerSig);
+  pthread_mutex_unlock(&checker);
 }
 
 void showUsage(){
