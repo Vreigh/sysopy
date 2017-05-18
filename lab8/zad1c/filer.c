@@ -22,7 +22,7 @@ void showUsage(){
   exit(1);
 }
 int validateR(int num){
-  if(num < 2 || num > 500){
+  if(num < 2 || num > 5000){
     throw("Wrong number of Records!");
     return -1;
   }

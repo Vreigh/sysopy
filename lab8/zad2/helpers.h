@@ -14,8 +14,8 @@ void throw(const char* err);
 char* convertTime(const time_t* mtime);
 int getQID(char* path, int ID);
 long getMicroTime();
-
-
+void swap(int *a, int *b);
+void slower(int n);
 
 typedef struct Record{
   int id;
