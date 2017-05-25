@@ -111,7 +111,7 @@ void* wJob(void* arg){
       if(sem_post(checker) == -1) throw("wJob post checker outer failed!");
       if(sem_post(writer) == -1) throw("wJob post writer outer failed!");
 
-      sleep(1);
+      //sleep(1);
     }
   }
 
@@ -137,7 +137,7 @@ void* rJob(void* arg){
       if(sem_post(checker) == -1) throw("e"); // jesli warunki nie sa spelnione, po prostu zwolnij checker
     }
 
-    sleep(1);
+    //sleep(1);
   }
 
   return NULL;

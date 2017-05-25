@@ -98,7 +98,7 @@ void* wJob(void* arg){
     pthread_cond_broadcast(&wFinish);
     pthread_mutex_unlock(&checker);
 
-    sleep(1);
+    //sleep(1);
   }
 
   return NULL;
@@ -123,7 +123,7 @@ void* rJob(void* arg){
     if(users.r == 0) pthread_cond_signal(&rFinish);
     pthread_mutex_unlock(&checker);
 
-    sleep(1);
+    //sleep(1);
   }
 
   return NULL;
