@@ -19,9 +19,13 @@ void swap(int *a, int *b);
 void slower(int n);
 int* getRandomTable(int size);
 
-typedef struct Users{
-  long w;
-  int r;
-}Users;
+typedef struct Client{
+  int fd;
+  char* name;
+}Client;
+
+typedef enum messTypes{
+  LOGIN = 0, RESULT = 1
+}messTypes;
 
 #endif

@@ -23,6 +23,7 @@
 
 #include <netinet/in.h>
 #include <sys/un.h>
+#include <sys/epoll.h>
 
 #include "helpers.h"
 
@@ -33,10 +34,23 @@ void quitter(int signo);
 void cleanup(void);
 int getWebSocket(short portNum);
 int getLocalSocket(char* path);
+void* pingerJob(void*);
+int prepareMonitor();
+void handleNewRequest(int socket);
+void handleNewMessage(int fd);
+void tryRegister(int fd, char* name);
 
 int webSocket;
 int localSocket;
 char* unixPath;
+
+int counter = 0;
+int cN = 0;
+Client clients[50];
+int epoll;
+pthread_t pinger;
+pthread_t commander;
+pthread_mutex_t clientsLock = PTHREAD_MUTEX_INITIALIZER;
 
 int main(int argc, char** argv){
   if(argc != 3) showUsage();
@@ -46,10 +60,111 @@ int main(int argc, char** argv){
   short portNum = validatePort((short)atoi(argv[1])); // walidacja poprawnosci inputu
   unixPath = validatePath(argv[2]);
 
-  webSocket = getWebSocket(portNum); // adres, socket i bindowanie
-  localSocket = getLocalSocket(unixPath); // adres, socket i bindowanie
+  webSocket = getWebSocket(portNum); // adres, socket, bindowanie i listen
+  localSocket = getLocalSocket(unixPath);
 
-  sleep(100);
+  epoll = prepareMonitor();
+
+  if(pthread_create(&pinger, NULL, pingerJob, NULL) != 0) throw("Creating thread failed!");
+
+  struct epoll_event event;
+  while(1){
+    if(epoll_wait(epoll, &event, 1, -1) == -1) throw("Epoll_wait failed!");
+
+    if(event.data.fd < 0){
+      handleNewRequest(-event.data.fd);
+    }else{ // nowa wiadomosc
+      handleNewMessage(event.data.fd);
+    }
+
+  }
+}
+void handleNewRequest(int socket){
+  int newClient = accept(socket, NULL, NULL);
+  if(newClient == -1) throw("accepting new client failed!");
+
+  struct epoll_event event;
+  event.events = EPOLLIN | EPOLLPRI;
+  event.data.fd = newClient;
+
+  if(epoll_ctl(epoll, EPOLL_CTL_ADD, newClient, &event) == -1) throw("ctl add for new client failed!");
+}
+
+void handleNewMessage(int fd){
+  char mType;
+  short mLen;
+
+  if(read(fd, &mType, 1) != 1) throw("reading new message failed!");
+  if(read(fd, &mLen, 2) != 2) throw("reading new message failed!");
+  mLen = ntohs(mLen);
+
+  char* name = malloc(mLen);
+
+  if(mType == LOGIN){
+    if(read(fd, name, mLen) != mLen) throw("reading new message failed!");
+    tryRegister(fd, name);
+  }else if(mType == RESULT){
+    int resultCtn, result;
+    if(read(fd, &resultCtn, sizeof(int)) != sizeof(int)) throw("reading new message failed!");
+    resultCtn = ntohl(resultCtn);
+
+    if(read(fd, &result, sizeof(int)) != sizeof(int)) throw("reading new message failed!");
+    result = ntohl(result);
+
+    if(read(fd, name, mLen) != mLen) throw("reading new message failed!");
+
+    printf("Client %s calculated task %d with teh result of %d!\n", name, resultCtn, result);
+  }
+
+  free(name);
+}
+
+void tryRegister(int fd, char* name){
+  if(cN == 50){
+    // przygotuj i wyslij wiadomosc do kliena
+    // wyrzuc go z epolla
+  }
+  int ok = 1;
+
+  pthread_mutex_lock(&clientsLock);
+  for(int i=0; i<cN; i++){
+    if(strcmp(clients[i].name, name) == 0){
+      ok = 0;
+      break;
+    }
+  }
+  if(ok == 0){
+    // przygotuj i wyslij wiadomosc do klienta, mowiaca, ze nie mozna go zarejestrowac
+    // nastepnie wyrzuc go z epolla
+  }else{
+    clients[cN].fd = fd;
+    clients[cN].name = concat("", name);
+    cN++; // juz jest zarejestrowany w epollu - to wszystko
+  }
+  pthread_mutex_unlock(&clientsLock);
+}
+
+void* pingerJob(void* arg){
+  while(1){
+    printf("Hello, its just pinger, you know, pinging...\n");
+    sleep(1);
+  }
+  return NULL;
+}
+
+int prepareMonitor(){
+  int epoll = epoll_create(0);
+  if(epoll == -1) throw("Creating epoll monitor failed!");
+
+  struct epoll_event event;
+  event.events = EPOLLIN | EPOLLPRI;
+  event.data.fd = -webSocket;
+  if(epoll_ctl(epoll, EPOLL_CTL_ADD, webSocket, &event) == -1) throw("ctl for webSocket failed!");
+
+  event.data.fd = -localSocket;
+  if(epoll_ctl(epoll, EPOLL_CTL_ADD, localSocket, &event) == -1) throw("ctl for localSocket failed!");
+
+  return epoll;
 }
 
 int getWebSocket(short portNum){
@@ -61,7 +176,8 @@ int getWebSocket(short portNum){
   int webSocket = socket(AF_INET, SOCK_STREAM, 0);
   if(webSocket == -1) throw("Creating webSocket failed!");
 
-  if(bind(webSocket, &webAddress, sizeof(webAddress)) == -1) throw("Binding webSocket failed!");
+  if(bind(webSocket, &webAddress, sizeof(webAddress)) == -1) throw("webSocket binding failed!");
+  if(listen(webSocket, 50) == -1) throw("webSocket listen failed!");
 
   return webSocket;
 }
@@ -76,7 +192,8 @@ int getLocalSocket(char* path){
   int localSocket = socket(AF_UNIX, SOCK_STREAM, 0);
   if(localSocket == -1) throw("Creating localSocket failed!");
 
-  if(bind(localSocket, &localAddress, sizeof(localAddress)) == -1) throw("Binding localSocket failed!");
+  if(bind(localSocket, &localAddress, sizeof(localAddress)) == -1) throw("localSocket binding failed!");
+  if(listen(localSocket, 50) == -1) throw("localSocket listen failed!");
 
   return localSocket;
 }
@@ -97,6 +214,10 @@ char* validatePath(char* path){
   return path;
 }
 
+void quitter(int signo){
+  exit(2);
+}
+
 void cleanup(void){
   int allOk = 1;
 
@@ -112,12 +233,12 @@ void cleanup(void){
     printf("Unlinking unixPath failed! Errno: %d, %s\n", errno, strerror(errno));
     allOk = 0;
   }
+  if(close(epoll) == -1){
+    printf("Closing epoll failed! Errno: %d, %s\n", errno, strerror(errno));
+    allOk = 0;
+  }
 
   if(allOk == 1) printf("All cleaned up!\n");
-}
-
-void quitter(int signo){
-  exit(2);
 }
 
 void showUsage(){
