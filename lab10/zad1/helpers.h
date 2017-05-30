@@ -25,7 +25,9 @@ typedef struct Client{
 }Client;
 
 typedef enum messTypes{
-  LOGIN = 0, RESULT = 1
+  LOGIN = 0, RESULT = 1, FAILSIZE = 2,
+  FAILNAME = 3, PING = 4, PRES = 5,
+  REQ = 6
 }messTypes;
 
 #endif

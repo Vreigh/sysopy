@@ -35,10 +35,17 @@ void cleanup(void);
 int getWebSocket(short portNum);
 int getLocalSocket(char* path);
 void* pingerJob(void*);
+void* commanderJob(void*);
 int prepareMonitor();
 void handleNewRequest(int socket);
 void handleNewMessage(int fd);
 void tryRegister(int fd, char* name);
+void removeClient(int i);
+void removeSocket(int fd);
+int pushCommand(char command, int op1, int op2, char* name);
+int findClientFd(char* name);
+
+const int MAX_PING_WAIT = 30000;
 
 int webSocket;
 int localSocket;
@@ -66,6 +73,7 @@ int main(int argc, char** argv){
   epoll = prepareMonitor();
 
   if(pthread_create(&pinger, NULL, pingerJob, NULL) != 0) throw("Creating thread failed!");
+  if(pthread_create(&commander, NULL, commanderJob, NULL) != 0) throw("Creating thread failed!");
 
   struct epoll_event event;
   while(1){
@@ -113,47 +121,134 @@ void handleNewMessage(int fd){
 
     if(read(fd, name, mLen) != mLen) throw("reading new message failed!");
 
-    printf("Client %s calculated task %d with teh result of %d!\n", name, resultCtn, result);
+    printf("Client %s calculated task %d with the result of %d!\n", name, resultCtn, result);
   }
 
   free(name);
 }
 
 void tryRegister(int fd, char* name){
-  if(cN == 50){
-    // przygotuj i wyslij wiadomosc do kliena
-    // wyrzuc go z epolla
-  }
-  int ok = 1;
+  char mType;
 
   pthread_mutex_lock(&clientsLock);
-  for(int i=0; i<cN; i++){
-    if(strcmp(clients[i].name, name) == 0){
-      ok = 0;
-      break;
-    }
-  }
-  if(ok == 0){
-    // przygotuj i wyslij wiadomosc do klienta, mowiaca, ze nie mozna go zarejestrowac
-    // nastepnie wyrzuc go z epolla
+  if(cN == 50){
+    mType = FAILSIZE;
+    if(write(fd, &mType, 1)!= 1) throw("Failsize message failed!");
+    removeSocket(fd);
   }else{
-    clients[cN].fd = fd;
-    clients[cN].name = concat("", name);
-    cN++; // juz jest zarejestrowany w epollu - to wszystko
+    int tmp = findClientFd(name);
+
+    if(tmp != -1){
+      mType = FAILNAME;
+      if(write(fd, &mType, 1)!= 1) throw("Failsize message failed!");
+      removeSocket(fd);
+    }else{
+      clients[cN].fd = fd;
+      clients[cN].name = concat("", name);
+      cN++; // juz jest zarejestrowany w epollu - to wszystko
+    }
   }
   pthread_mutex_unlock(&clientsLock);
 }
 
 void* pingerJob(void* arg){
   while(1){
-    printf("Hello, its just pinger, you know, pinging...\n");
-    sleep(1);
+    pthread_mutex_lock(&clientsLock);
+    int j = 0;
+    for(int i=0; i<cN; i++){
+      char mType = PING;
+      if(write(clients[j].fd, &mType, 1)!= 1) throw("PING message failed!");
+
+      usleep(MAX_PING_WAIT);
+
+      if(recv(clients[j].fd, &mType, 1, MSG_DONTWAIT) != 1){
+        printf("Woha! Removing %s!\n", clients[j].name);
+        removeClient(j); // usuwam klienta i shiftuje tablice, wiec potem chce jeszcze raz ten sam indeks sprawzic
+      }else j++;
+    }
+    pthread_mutex_unlock(&clientsLock);
+    sleep(3);
   }
   return NULL;
 }
 
+void removeClient(int i){
+  removeSocket(clients[i].fd);
+  free(clients[i].name);
+  for(int j = i; j + 1 < cN; j++){
+    clients[j] = clients[j + 1];
+  }
+  cN--;
+}
+
+void removeSocket(int fd){
+  if(epoll_ctl(epoll, EPOLL_CTL_DEL, fd, NULL) == -1) throw("Removing from epoll failed!");
+  if(shutdown(fd, SHUT_RDWR) == -1) throw("Shutdowning failed!");
+  if(close(fd) == -1) throw("closing fd failed!");
+}
+
+void* commanderJob(void* arg){
+  char command;
+  int op1, op2;
+  char name[20];
+  char buff[100];
+  while(1){
+    printf("Enter commands in format <op1> <command> <op2> <name>!\n");
+    fgets(buff, 100, stdin);
+    if(sscanf(buff, "%d %c %d %s\n", &op1, &command, &op2, name) != 4){
+      printf("Wrong format of input!\n");
+      continue;
+    }
+    if((command != '+') && (command != '-') && (command != '/') && (command != '*')){
+      printf("Wrong command!\n");
+      continue;
+    }
+
+    int res = pushCommand(command, op1, op2, name);
+    if(res == 0){
+      printf("Command: %d %c %d Has been sent to client %s!\n", op1, command, op2, name);
+    }else if(res == -1){
+      printf("Command couldnt be sent. Client not found!\n");
+    }else{
+      printf("Command couldnt be sent. Something weird happened...\n");
+    }
+  }
+  return NULL;
+}
+
+int pushCommand(char command, int op1, int op2, char* name){
+  pthread_mutex_lock(&clientsLock);
+  int fd = findClientFd(name);
+  pthread_mutex_unlock(&clientsLock);
+  if(fd == -1) return -1;
+
+  int ok = 1;
+
+  char mType = REQ;
+  int currCtn = htonl(counter++);
+  int ope1 = htonl(op1);
+  int ope2 = htonl(op2);
+
+  if(write(fd, &mType, 1) != 1) ok = -2;
+  if(write(fd, &command, 1) != 1) ok = -2;
+  if(write(fd, &currCtn, sizeof(int)) != sizeof(int)) ok = -2;
+  if(write(fd, &ope1, sizeof(int)) != sizeof(int)) ok = -2;
+  if(write(fd, &ope2, sizeof(int)) != sizeof(int)) ok = -2;
+
+  return ok;
+}
+
+int findClientFd(char* name){
+  for(int i=0; i<cN; i++){
+    if(strcmp(clients[i].name, name) == 0){
+      return clients[i].fd;
+    }
+  }
+  return -1;
+}
+
 int prepareMonitor(){
-  int epoll = epoll_create(0);
+  int epoll = epoll_create1(0);
   if(epoll == -1) throw("Creating epoll monitor failed!");
 
   struct epoll_event event;
