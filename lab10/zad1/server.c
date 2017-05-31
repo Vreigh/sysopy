@@ -45,8 +45,6 @@ void removeSocket(int fd);
 int pushCommand(char command, int op1, int op2, char* name);
 int findClientFd(char* name);
 
-const int MAX_PING_WAIT = 30000;
-
 int webSocket;
 int localSocket;
 char* unixPath;
@@ -122,6 +120,15 @@ void handleNewMessage(int fd){
     if(read(fd, name, mLen) != mLen) throw("reading new message failed!");
 
     printf("Client %s calculated task %d with the result of %d!\n", name, resultCtn, result);
+  }else if(mType == PRES){
+    pthread_mutex_lock(&clientsLock); // zablokuj, zeby nie scigac sie z pingerem
+    if(read(fd, name, mLen) != mLen) throw("reading new message failed!");
+    for(int i=0; i<cN; i++){ // przeszukaj, czy pinger juz nie usunal tej nazwy
+      if(strcmp(clients[i].name, name) == 0){
+        clients[i].rec++; // jesli pinger jeszcze nie usunal, to zwieksz licznik otrzymanych
+      }
+    }
+    pthread_mutex_unlock(&clientsLock);
   }
 
   free(name);
@@ -145,6 +152,8 @@ void tryRegister(int fd, char* name){
     }else{
       clients[cN].fd = fd;
       clients[cN].name = concat("", name);
+      clients[cN].sent = 0;
+      clients[cN].rec = 0;
       cN++; // juz jest zarejestrowany w epollu - to wszystko
     }
   }
@@ -156,18 +165,18 @@ void* pingerJob(void* arg){
     pthread_mutex_lock(&clientsLock);
     int j = 0;
     for(int i=0; i<cN; i++){
-      char mType = PING;
-      if(write(clients[j].fd, &mType, 1)!= 1) throw("PING message failed!");
-
-      usleep(MAX_PING_WAIT);
-
-      if(recv(clients[j].fd, &mType, 1, MSG_DONTWAIT) != 1){
+      if(clients[j].sent != clients[j].rec){
         printf("Woha! Removing %s!\n", clients[j].name);
         removeClient(j); // usuwam klienta i shiftuje tablice, wiec potem chce jeszcze raz ten sam indeks sprawzic
-      }else j++;
+      }else{
+        char mType = PING;
+        if(write(clients[j].fd, &mType, 1)!= 1) throw("PING message failed!");
+        clients[j].sent++;
+        j++;
+      }
     }
     pthread_mutex_unlock(&clientsLock);
-    sleep(3);
+    sleep(1);
   }
   return NULL;
 }

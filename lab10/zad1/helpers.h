@@ -22,6 +22,8 @@ int* getRandomTable(int size);
 typedef struct Client{
   int fd;
   char* name;
+  char sent;
+  char rec;
 }Client;
 
 typedef enum messTypes{
