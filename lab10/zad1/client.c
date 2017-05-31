@@ -38,7 +38,7 @@ short validatePort(short port);
 int connectLocal(char* path);
 int connectWeb(int address, short port);
 void handleReq();
-void handlePing();
+void sendName(char type);
 void registerClient(char* name, int sfd);
 
 int sfd; // socket file descriptor
@@ -68,20 +68,20 @@ int main(int argc, char** argv){
     if(read(sfd, &mType, 1) != 1) throw("CLIENT: reading type failed!");
 
     if(mType == PING){
-      handlePing();
+      sendName(PONG);
     }else if(mType == REQ){
       handleReq();
     }
   }
 }
 
-void handlePing(){
-  char resType = PONG;
+void sendName(char type){
+  char resType = type;
   short mLen = (short)strlen(name) + 1;
   short mLen1 = htons(mLen);
-  if(write(sfd,&resType, 1) != 1) throw("CLIENT: PONG failed!");
-  if(write(sfd, &mLen1, 2) != 2) throw("CLIENT: PONG: writing mLen failed!");
-  if(write(sfd, name, mLen) != mLen) throw("CLIENT: PONG: writing name failed!");
+  if(write(sfd,&resType, 1) != 1) throw("CLIENT: resType failed!");
+  if(write(sfd, &mLen1, 2) != 2) throw("CLIENT:  writing mLen failed!");
+  if(write(sfd, name, mLen) != mLen) throw("CLIENT: writing name failed!");
 }
 
 void handleReq(){
@@ -156,14 +156,9 @@ int connectWeb(int address, short port){
 }
 
 void registerClient(char* name, int sfd){
-  char mType = LOGIN;
-  short mLen = strlen(name) + 1;
-  short mLen1 = htons(mLen);
-  if(write(sfd, &mType, 1) != 1) throw("Sending login type failed!");
-  if(write(sfd, &mLen1, 2) != 2) throw("Sending login mLen failed!");
-  if(write(sfd, name, mLen) != mLen) throw("Sending login name failed!");
-
-  if(read(sfd, &mType, 1) != 1) throw("Receicing login response failed!");
+  char mType;
+  sendName(LOGIN);
+  if(read(sfd, &mType, 1) != 1) throw("Receiving login response failed!");
 
   if(mType == FAILSIZE){
     printf("Too many clients, couldnt log in!\n");
@@ -223,7 +218,7 @@ short validatePort(short port){
 }
 
 void quitter(int signo){
-  // tu powinien wyslac wiadomosc od wyrejestrowywania sie
+  sendName(LOGOUT);
   exit(2);
 }
 

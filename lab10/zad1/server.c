@@ -44,6 +44,7 @@ void removeClient(int i);
 void removeSocket(int fd);
 int pushCommand(char command, int op1, int op2, char* name);
 int findClientFd(char* name);
+int getClientIndexByFd(int fd);
 
 int webSocket;
 int localSocket;
@@ -103,7 +104,6 @@ void handleNewMessage(int fd){
   if(read(fd, &mType, 1) != 1) throw("reading new message mType failed!");
   if(read(fd, &mLen, 2) != 2) throw("reading new message mLen failed!");
   mLen = ntohs(mLen);
-
   char* name = malloc(mLen);
 
   if(mType == LOGIN){
@@ -122,10 +122,20 @@ void handleNewMessage(int fd){
     printf("Client %s calculated task %d with the result of %d!\n", name, resultCtn, result);
   }else if(mType == PONG){
     pthread_mutex_lock(&clientsLock); // zablokuj, zeby nie scigac sie z pingerem
-    if(read(fd, name, mLen) != mLen) throw("reading new message pong name failed!");
+    if(read(fd, name, mLen) != mLen) throw("reading new message pong name failed!"); // ten read moglby zfailowac jesli nas pinger wywlaszczyl
     for(int i=0; i<cN; i++){ // przeszukaj, czy pinger juz nie usunal tej nazwy
       if(strcmp(clients[i].name, name) == 0){
         clients[i].rec++; // jesli pinger jeszcze nie usunal, to zwieksz licznik otrzymanych
+      }
+    }
+    pthread_mutex_unlock(&clientsLock);
+  }else if(mType == LOGOUT){
+    pthread_mutex_lock(&clientsLock); // zablokuj, zeby nie scigac sie z pingerem
+    if(read(fd, name, mLen) != mLen) throw("reading logout name failed!"); // tak samo
+    for(int i=0; i<cN; i++){
+      if(strcmp(clients[i].name, name) == 0){ // faktycznie istnieje taki klient, ktory chcialby sie wylogowac
+        printf("Client %s logged out!\n", name);
+        removeClient(i);
       }
     }
     pthread_mutex_unlock(&clientsLock);
@@ -172,7 +182,9 @@ void* pingerJob(void* arg){
         removeClient(j); // usuwam klienta i shiftuje tablice, wiec potem chce jeszcze raz ten sam indeks sprawzic
       }else{
         char mType = PING;
-        if(write(clients[j].fd, &mType, 1)!= 1) throw("PING message failed!");
+        if(write(clients[j].fd, &mType, 1)!= 1){
+          printf("There has been an error sending PING to client %s\n", clients[j].name);
+        }
         clients[j].sent++;
         j++;
       }
@@ -217,7 +229,7 @@ void* commanderJob(void* arg){
 
     int res = pushCommand(command, op1, op2, name);
     if(res == 0){
-      printf("Command: %d %c %d Has been sent to client %s!\n", op1, command, op2, name);
+      printf("Command %d: %d %c %d Has been sent to client %s!\n",counter -1, op1, command, op2, name);
     }else if(res == -1){
       printf("Command couldnt be sent. Client not found!\n");
     }else{
@@ -233,7 +245,7 @@ int pushCommand(char command, int op1, int op2, char* name){
   pthread_mutex_unlock(&clientsLock);
   if(fd == -1) return -1;
 
-  int ok = 1;
+  int ok = 0;
 
   char mType = REQ;
   int currCtn = htonl(counter++);
@@ -253,6 +265,15 @@ int findClientFd(char* name){
   for(int i=0; i<cN; i++){
     if(strcmp(clients[i].name, name) == 0){
       return clients[i].fd;
+    }
+  }
+  return -1;
+}
+
+int getClientIndexByFd(int fd){
+  for(int i=0; i<cN; i++){
+    if(clients[i].fd == fd){
+      return i;
     }
   }
   return -1;
@@ -285,7 +306,7 @@ int getWebSocket(short portNum){
   if(bind(webSocket, &webAddress, sizeof(webAddress)) == -1) throw("webSocket binding failed!");
   if(listen(webSocket, 50) == -1) throw("webSocket listen failed!");
 
-  //printf("Server address is %s\n", inet_ntoa(webAddress.sin_addr));
+  printf("Server address is %s\n", inet_ntoa(webAddress.sin_addr));
 
   return webSocket;
 }

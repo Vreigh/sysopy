@@ -30,7 +30,7 @@ typedef struct Client{
 typedef enum messTypes{
   LOGIN = 0, RESULT = 1, FAILSIZE = 2,
   FAILNAME = 3, PING = 4, PONG = 5,
-  REQ = 6, SUCCESS = 7
+  REQ = 6, SUCCESS = 7, LOGOUT = 8
 }messTypes;
 
 typedef enum connectTypes{
