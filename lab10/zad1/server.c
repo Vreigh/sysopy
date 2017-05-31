@@ -1,5 +1,4 @@
 #define _GNU_SOURCE
-#define UNIX_PATH_MAX    108
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,11 +23,12 @@
 #include <netinet/in.h>
 #include <sys/un.h>
 #include <sys/epoll.h>
+#include <arpa/inet.h>
 
 #include "helpers.h"
 
 void showUsage();
-int validatePort(short port);
+short validatePort(short port);
 char* validatePath(char* path);
 void quitter(int signo);
 void cleanup(void);
@@ -100,29 +100,29 @@ void handleNewMessage(int fd){
   char mType;
   short mLen;
 
-  if(read(fd, &mType, 1) != 1) throw("reading new message failed!");
-  if(read(fd, &mLen, 2) != 2) throw("reading new message failed!");
+  if(read(fd, &mType, 1) != 1) throw("reading new message mType failed!");
+  if(read(fd, &mLen, 2) != 2) throw("reading new message mLen failed!");
   mLen = ntohs(mLen);
 
   char* name = malloc(mLen);
 
   if(mType == LOGIN){
-    if(read(fd, name, mLen) != mLen) throw("reading new message failed!");
+    if(read(fd, name, mLen) != mLen) throw("reading new message login name failed!");
     tryRegister(fd, name);
   }else if(mType == RESULT){
     int resultCtn, result;
-    if(read(fd, &resultCtn, sizeof(int)) != sizeof(int)) throw("reading new message failed!");
+    if(read(fd, &resultCtn, sizeof(int)) != sizeof(int)) throw("reading new message resultCtn failed!");
     resultCtn = ntohl(resultCtn);
 
-    if(read(fd, &result, sizeof(int)) != sizeof(int)) throw("reading new message failed!");
+    if(read(fd, &result, sizeof(int)) != sizeof(int)) throw("reading new message result failed!");
     result = ntohl(result);
 
-    if(read(fd, name, mLen) != mLen) throw("reading new message failed!");
+    if(read(fd, name, mLen) != mLen) throw("reading new message result name failed!");
 
     printf("Client %s calculated task %d with the result of %d!\n", name, resultCtn, result);
-  }else if(mType == PRES){
+  }else if(mType == PONG){
     pthread_mutex_lock(&clientsLock); // zablokuj, zeby nie scigac sie z pingerem
-    if(read(fd, name, mLen) != mLen) throw("reading new message failed!");
+    if(read(fd, name, mLen) != mLen) throw("reading new message pong name failed!");
     for(int i=0; i<cN; i++){ // przeszukaj, czy pinger juz nie usunal tej nazwy
       if(strcmp(clients[i].name, name) == 0){
         clients[i].rec++; // jesli pinger jeszcze nie usunal, to zwieksz licznik otrzymanych
@@ -155,6 +155,8 @@ void tryRegister(int fd, char* name){
       clients[cN].sent = 0;
       clients[cN].rec = 0;
       cN++; // juz jest zarejestrowany w epollu - to wszystko
+      mType = SUCCESS;
+      if(write(fd, &mType, 1)!= 1) throw("Success message failed!");
     }
   }
   pthread_mutex_unlock(&clientsLock);
@@ -176,7 +178,7 @@ void* pingerJob(void* arg){
       }
     }
     pthread_mutex_unlock(&clientsLock);
-    sleep(1);
+    sleep(2);
   }
   return NULL;
 }
@@ -283,6 +285,8 @@ int getWebSocket(short portNum){
   if(bind(webSocket, &webAddress, sizeof(webAddress)) == -1) throw("webSocket binding failed!");
   if(listen(webSocket, 50) == -1) throw("webSocket listen failed!");
 
+  //printf("Server address is %s\n", inet_ntoa(webAddress.sin_addr));
+
   return webSocket;
 }
 
@@ -302,7 +306,7 @@ int getLocalSocket(char* path){
   return localSocket;
 }
 
-int validatePort(short port){
+short validatePort(short port){
   if((port < 1024) || (port > 60999)){
     throw("Port must be a number between 1024 and 60999!");
   }
@@ -312,7 +316,7 @@ int validatePort(short port){
 char* validatePath(char* path){
   int l = strlen(path);
   if((l < 1) || (l > UNIX_PATH_MAX)){
-    printf("Port must be of length between 1 and %d\n", UNIX_PATH_MAX);
+    printf("Path must be of length between 1 and %d\n", UNIX_PATH_MAX);
     exit(1);
   }
   return path;

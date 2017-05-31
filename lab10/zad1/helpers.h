@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <time.h>
 #define tabSize 1000
+#define UNIX_PATH_MAX 108
 
 char* concat(const char *s1, const char *s2);
 char* concat3(const char *s1, const char *s2, const char* s3);
@@ -28,8 +29,12 @@ typedef struct Client{
 
 typedef enum messTypes{
   LOGIN = 0, RESULT = 1, FAILSIZE = 2,
-  FAILNAME = 3, PING = 4, PRES = 5,
-  REQ = 6
+  FAILNAME = 3, PING = 4, PONG = 5,
+  REQ = 6, SUCCESS = 7
 }messTypes;
+
+typedef enum connectTypes{
+  LOCAL = 0, WEB = 1
+}connectTypes;
 
 #endif
